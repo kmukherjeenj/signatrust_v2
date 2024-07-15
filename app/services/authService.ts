@@ -1,15 +1,15 @@
 // app/services/authService.ts
 
-import { createAgent, IIdentifier } from '@veramo/core';
+import { createAgent, IIdentifier, IAgent, IDIDManager } from '@veramo/core';
 import { DIDManager, MemoryDIDStore } from '@veramo/did-manager';
 import { EthrDIDProvider } from '@veramo/did-provider-ethr';
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 
 // Initialize Veramo agent
-const infuraProjectId = 'YOUR-PROJECT-ID'; // Replace with your Infura project ID
+const infuraApiKey = '2CM1YixR7iSGzmp3Myp5Qc3HKvA'; // Replace with your Infura API Key
 
-const agent = createAgent({
+export const agent = createAgent<IDIDManager>({
   plugins: [
     new KeyManager({
       store: new MemoryKeyStore(),
@@ -24,7 +24,7 @@ const agent = createAgent({
         'did:ethr:goerli': new EthrDIDProvider({
           defaultKms: 'local',
           network: 'goerli',
-          rpcUrl: `https://goerli.infura.io/v3/${infuraProjectId}`,
+          rpcUrl: `https://goerli.infura.io/v3/${infuraApiKey}`,
         }),
       },
     }),
@@ -39,24 +39,19 @@ interface AccountData {
 
 export const createAccount = async (accountData: AccountData): Promise<IIdentifier> => {
   try {
-    // Create a new DID
     const identifier = await agent.didManagerCreate({
       provider: 'did:ethr:goerli',
       alias: accountData.username,
     });
 
-    // Hash the password (use a proper password hashing library in production)
     const hashedPassword = await hashPassword(accountData.password);
 
-    // Store the account information securely
-    // In a real application, you'd use a secure database
     const accountInfo = {
       did: identifier.did,
       email: accountData.email,
       hashedPassword,
     };
 
-    // Store accountInfo securely (implement this part)
     await storeAccountInfo(accountInfo);
 
     return identifier;
@@ -66,13 +61,12 @@ export const createAccount = async (accountData: AccountData): Promise<IIdentifi
   }
 };
 
-// Implement these functions securely
 async function hashPassword(password: string): Promise<string> {
-  // Use a proper password hashing library like bcrypt
+  // TODO: Implement proper password hashing
   return password; // This is just a placeholder
 }
 
 async function storeAccountInfo(accountInfo: any): Promise<void> {
-  // Implement secure storage of account info
+  // TODO: Implement secure storage of account info
   console.log('Storing account info:', accountInfo);
 }
