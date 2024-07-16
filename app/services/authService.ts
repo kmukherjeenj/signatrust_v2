@@ -1,15 +1,26 @@
-// app/services/authService.ts
+// File: app/services/authService.ts
 
-import { createAgent, IIdentifier, IAgent, IDIDManager } from '@veramo/core';
+import { createAgent, IIdentifier, IDIDManager, IKeyManager, IDataStore, IResolver, ICredentialPlugin } from '@veramo/core';
+import { CredentialPlugin } from '@veramo/credential-w3c';
 import { DIDManager, MemoryDIDStore } from '@veramo/did-manager';
 import { EthrDIDProvider } from '@veramo/did-provider-ethr';
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
+import { DIDResolverPlugin } from '@veramo/did-resolver';
+import { Resolver } from 'did-resolver';
+import { getResolver as ethrDidResolver } from 'ethr-did-resolver';
+import { getResolver as webDidResolver } from 'web-did-resolver';
+
+interface RegistrationData {
+  username: string;
+  email: string;
+  password: string;
+}
 
 // Initialize Veramo agent
-const infuraApiKey = '2CM1YixR7iSGzmp3Myp5Qc3HKvA'; // Replace with your Infura API Key
+const infuraApiKey = process.env.INFURA_API_KEY || 'YOUR_INFURA_API_KEY';
 
-export const agent = createAgent<IDIDManager>({
+export const agent = createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialPlugin>({
   plugins: [
     new KeyManager({
       store: new MemoryKeyStore(),
@@ -28,45 +39,47 @@ export const agent = createAgent<IDIDManager>({
         }),
       },
     }),
+    new DIDResolverPlugin({
+      resolver: new Resolver({
+        ...ethrDidResolver({ networks: [{ name: 'goerli', rpcUrl: `https://goerli.infura.io/v3/${infuraApiKey}` }] }),
+        ...webDidResolver(),
+      }),
+    }),
+    new CredentialPlugin(),
   ],
 });
 
-interface AccountData {
-  username: string;
-  email: string;
-  password: string;
-}
-
-export const createAccount = async (accountData: AccountData): Promise<IIdentifier> => {
+export async function createAccount(formData: RegistrationData): Promise<IIdentifier> {
   try {
     const identifier = await agent.didManagerCreate({
       provider: 'did:ethr:goerli',
-      alias: accountData.username,
+      alias: formData.username,
     });
 
-    const hashedPassword = await hashPassword(accountData.password);
+    // Here you would typically handle the email and password
+    // For example, you might want to store them securely or use them for authentication
+    console.log('Account created:', { did: identifier.did, email: formData.email });
 
-    const accountInfo = {
-      did: identifier.did,
-      email: accountData.email,
-      hashedPassword,
-    };
-
-    await storeAccountInfo(accountInfo);
+    // Note: In a real-world scenario, you should never log or store passwords in plain text
+    // This is just for demonstration purposes
 
     return identifier;
   } catch (error) {
     console.error('Error creating account:', error);
     throw new Error('Failed to create account');
   }
-};
-
-async function hashPassword(password: string): Promise<string> {
-  // TODO: Implement proper password hashing
-  return password; // This is just a placeholder
 }
+export async function verifySignature(signatureJwt: string) {
+    try {
+      const result = await agent.verifyCredential({
+        credential: signatureJwt,
+        proofFormat: 'jwt'
+      });
+      return result.verified;
+    } catch (error) {
+      console.error('Signature verification error:', error);
+      throw new Error('Failed to verify signature');
+    }
+  }
 
-async function storeAccountInfo(accountInfo: any): Promise<void> {
-  // TODO: Implement secure storage of account info
-  console.log('Storing account info:', accountInfo);
-}
+// You can add more functions here as needed, such as verifyCredential, issueCredential, etc.
