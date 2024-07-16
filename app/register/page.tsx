@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createAccount } from '../services/authService';
+import { createAccount } from '../lib/auth/authService';
 
 interface RegistrationData {
   username: string;

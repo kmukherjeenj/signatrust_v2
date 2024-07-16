@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { agent } from '../services/authService';
+import { agent } from '../lib/auth/authService';
 import Link from 'next/link';
 
 const InfoCard = ({ title, description }: { title: string; description: string }) => (
