@@ -14,13 +14,13 @@ class FallbackStorage implements SecureStorage {
   }
 
   async retrieveDID(): Promise<IIdentifier | null> {
-    let result: IIdentifier | null = null;
-    this.storage.forEach((value, key) => {
+    const entries = Array.from(this.storage.entries());
+    for (const [key, value] of entries) {
       if (key.startsWith('did:')) {
-        result = value as IIdentifier;
+        return value as IIdentifier;
       }
-    });
-    return result;
+    }
+    return null;
   }
 
   async storeKey(key: any): Promise<void> {
@@ -40,24 +40,21 @@ export class PlatformSecureStorage implements SecureStorage {
   private storage: SecureStorage;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      // Browser environment
-      if (this.isIOS() || this.isAndroid()) {
-        this.storage = new IOSAndroidSecureEnclaveStorage();
-      } else {
-        console.warn('Using fallback storage in browser environment. This is not secure for production use.');
-        this.storage = new FallbackStorage();
-      }
-    } else {
-      // Server environment
-      if (process.platform === 'win32') {
+    const storageType = process.env.SECURE_STORAGE_TYPE || 'fallback';
+
+    switch (storageType) {
+      case 'windows':
         this.storage = new WindowsTPMStorage();
-      } else if (process.platform === 'darwin') {
+        break;
+      case 'macos':
         this.storage = new MacOSKeychainStorage();
-      } else {
-        console.warn('Using fallback storage in server environment. This is not secure for production use.');
+        break;
+      case 'mobile':
+        this.storage = new IOSAndroidSecureEnclaveStorage();
+        break;
+      default:
+        console.warn('Using fallback storage. This is not secure for production use.');
         this.storage = new FallbackStorage();
-      }
     }
   }
 
@@ -79,23 +76,5 @@ export class PlatformSecureStorage implements SecureStorage {
 
   async deleteData(key: string): Promise<void> {
     return this.storage.deleteData(key);
-  }
-
-  private isWindows(): boolean {
-    return process.platform === 'win32';
-  }
-
-  private isMacOS(): boolean {
-    return process.platform === 'darwin';
-  }
-
-  private isIOS(): boolean {
-    // Implement iOS detection logic
-    return false; // Placeholder
-  }
-
-  private isAndroid(): boolean {
-    // Implement Android detection logic
-    return false; // Placeholder
   }
 }

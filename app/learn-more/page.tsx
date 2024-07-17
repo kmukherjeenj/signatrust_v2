@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function DigitalIDProsCons() {
+export default function Page() {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -11,7 +11,7 @@ export default function DigitalIDProsCons() {
           Digital IDs: The Real Deal
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
-          Let's dive into the world of Digital IDs!
+          Let&apos;s dive into the world of Digital IDs!
         </p>
       </div>
 
@@ -50,7 +50,7 @@ export default function DigitalIDProsCons() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <p className="text-center text-xs text-gray-400">
-          By diving into Digital IDs, you're stepping into the future. Need more deets? Check out our{' '}
+          By diving into Digital IDs, you&apos;re stepping into the future. Need more deets? Check out our{' '}
           <Link href="/terms" className="text-purple-400 hover:text-purple-300">
             Terms of Service
           </Link>{' '}

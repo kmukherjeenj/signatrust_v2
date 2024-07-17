@@ -4,27 +4,61 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, File, Upload, Key } from 'lucide-react';
+import { agent } from '../lib/auth/authService';
+import { IIdentifier } from '@veramo/core';
 
-// Mock user data - replace with actual data fetching
-const mockUser = {
-  name: "John Doe",
-  email: "john@example.com",
-  farcasterID: "john_doe_123"
-};
+interface UserData {
+  did: string;
+  name?: string;
+  email?: string;
+}
 
 export default function Dashboard() {
-  const [user, setUser] = useState(mockUser);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch user data here
-    // Example: fetchUserData().then(data => setUser(data));
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        const identifiers: IIdentifier[] = await agent.didManagerFind();
+        if (identifiers.length > 0) {
+          const identifier = identifiers[0]; // Assuming the first DID is the user's
+          const userData: UserData = {
+            did: identifier.did,
+            name: identifier.alias || 'Unknown',
+            email: identifier.alias ? `${identifier.alias}@example.com` : undefined,
+          };
+          setUser(userData);
+        } else {
+          // No DID found, user might not be logged in
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Handle error (e.g., show error message)
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleLogout = () => {
+    fetchUserData();
+  }, [router]);
+
+  const handleLogout = async () => {
     // Implement logout logic here
+    // For example, clear the stored DID or session
+    // await agent.didManagerDelete({ did: user.did });
     router.push('/login');
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
+    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">No user data available</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -49,15 +83,15 @@ export default function Dashboard() {
                 <h2 className="text-xl font-semibold mb-4">User Information</h2>
                 <div className="flex items-center mb-2">
                   <User className="mr-2" size={20} />
-                  <span>{user.name}</span>
+                  <span>{user.name || 'Unknown'}</span>
                 </div>
                 <div className="flex items-center mb-2">
                   <File className="mr-2" size={20} />
-                  <span>{user.email}</span>
+                  <span>{user.email || 'No email available'}</span>
                 </div>
                 <div className="flex items-center">
                   <Key className="mr-2" size={20} />
-                  <span>Farcaster ID: {user.farcasterID}</span>
+                  <span>DID: {user.did}</span>
                 </div>
               </div>
             </div>
@@ -84,9 +118,9 @@ export default function Dashboard() {
               <div className="px-4 py-5 sm:p-6">
                 <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
                 <ul className="divide-y divide-gray-700">
-                <li className="py-3">Document uploaded: &quot;Contract.pdf&quot;</li>
-                <li className="py-3">Signature requested for: &quot;NDA.pdf&quot;</li>
-                  <li className="py-3">Farcaster ID created</li>
+                  <li className="py-3">DID created: {user.did}</li>
+                  <li className="py-3">Login successful</li>
+                  {/* Add more activities as needed */}
                 </ul>
               </div>
             </div>
