@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { FarcasterProvider } from '../context/FarcasterContext'
+import { FarcasterProvider } from '../../context/FarcasterContext'
 
 interface FarcasterProviderWrapperProps {
   children: React.ReactNode

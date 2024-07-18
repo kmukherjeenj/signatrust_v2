@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import SkeletonLoader from '../components/SkeletonLoader'
+import SkeletonLoader from '../client/components/SkeletonLoader'
 import { agent } from '../lib/auth/authService'
 import { VerifiableCredential, IAgent } from '@veramo/core'
 

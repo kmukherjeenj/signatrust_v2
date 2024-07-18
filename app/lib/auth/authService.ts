@@ -1,5 +1,3 @@
-// File: app/services/authService.ts
-
 import { createAgent, IDIDManager, IKeyManager, IDataStore, IResolver, ICredentialPlugin, IIdentifier, IAgentContext, IKey } from '@veramo/core';
 import { CredentialPlugin } from '@veramo/credential-w3c';
 import { DIDManager, AbstractDIDStore } from '@veramo/did-manager';
@@ -70,7 +68,10 @@ class MemoryDIDStore extends AbstractDIDStore {
 }
 
 // Initialize Veramo agent
-const infuraApiKey = process.env.INFURA_API_KEY || 'YOUR_INFURA_API_KEY';
+const infuraApiKey = process.env.INFURA_API_KEY;
+if (!infuraApiKey) {
+  throw new Error('INFURA_API_KEY is not set in the environment variables');
+}
 const secureStorage = new PlatformSecureStorage();
 
 export const agent = createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialPlugin>({
