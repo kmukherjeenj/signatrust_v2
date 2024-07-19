@@ -1,32 +1,68 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import '../styles/globals.css'
-// import { FarcasterProvider } from '../hooks/useFarcaster'
+// C:\Source\signatrust\app\layout.tsx
+'use client';
 
-const inter = Inter({ subsets: ['latin'] })
+import React, { useEffect } from 'react';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '../styles/globals.css';
+import { log, logError } from './client/utils/client_logger';
+import ErrorBoundary from './client/components/ErrorBoundary';
 
-export const metadata: Metadata = {
+const inter = Inter({ subsets: ['latin'] });
+
+/*export const metadata: Metadata = {
   title: 'SignaTrust - Secure Digital Signatures with Blockchain & zkProofs',
   description: 'Experience the most secure and scalable digital signature solution on the market',
-  keywords: ['farcaster', 'digital signature', 'blockchain', 'zkProofs'],
+  keywords: ['verasmo', 'digital signature', 'blockchain', 'zkProofs'],
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
-}
+}; */
 
-export default function RootLayout({
+function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  useEffect(() => {
+    log('info', 'Application started');
+
+    const handleError = (event: ErrorEvent) => {
+      logError(event.error, 'Unhandled error in application');
+      console.error('Unhandled error:', event.error);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      logError(event.reason, 'Unhandled promise rejection');
+      console.error('Unhandled promise rejection:', event.reason);
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      log('info', 'Application shutting down');
+    };
+  }, []);
+
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-900 text-white`}>
-        {/* <FarcasterProvider> */}
+        <ErrorBoundary fallback={<div>Something went wrong. Please refresh the page.</div>}>
           {children}
-        {/* </FarcasterProvider> */}
+        </ErrorBoundary>
       </body>
     </html>
-  )
+  );
+}
+
+export default function RootLayoutWrapper(props: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary fallback={<div>Something went wrong at the root level. Please refresh the page.</div>}>
+      <RootLayout {...props} />
+    </ErrorBoundary>
+  );
 }

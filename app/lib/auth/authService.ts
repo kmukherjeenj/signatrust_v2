@@ -1,173 +1,182 @@
-import { createAgent, IDIDManager, IKeyManager, IDataStore, IResolver, ICredentialPlugin, IIdentifier, IAgentContext, IKey } from '@veramo/core';
-import { CredentialPlugin } from '@veramo/credential-w3c';
-import { DIDManager, AbstractDIDStore } from '@veramo/did-manager';
-import { EthrDIDProvider } from '@veramo/did-provider-ethr';
-import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager';
-import { KeyManagementSystem } from '@veramo/kms-local';
-import { DIDResolverPlugin } from '@veramo/did-resolver';
-import { Resolver } from 'did-resolver';
-import { getResolver as ethrDidResolver } from 'ethr-did-resolver';
-import { getResolver as webDidResolver } from 'web-did-resolver';
+import { createAgent } from '@veramo/core'
+import { IDIDManager, IKeyManager, IDataStore, IResolver, ICredentialPlugin, IIdentifier } from '@veramo/core-types'
+import { CredentialPlugin } from '@veramo/credential-w3c'
+import { DIDManager } from '@veramo/did-manager'
+import { EthrDIDProvider } from '@veramo/did-provider-ethr'
+import { AbstractSecretBox, KeyManager } from '@veramo/key-manager'
+import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
+import { DIDResolverPlugin } from '@veramo/did-resolver'
+import { Resolver } from 'did-resolver'
+import { getResolver as ethrDidResolver } from 'ethr-did-resolver'
+import { getResolver as webDidResolver } from 'web-did-resolver'
+import { DataStore, Entities, KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
+import { DataSource } from 'typeorm'
 
-// Import the SecureStorage interface and PlatformSecureStorage implementation
-import { SecureStorage } from '../../lib/storage/SecureStorage';
-import { PlatformSecureStorage } from '../../lib/storage/PlatformSecureStorage';
+import { SecureStorage } from '../../lib/storage/SecureStorage'
+import { PlatformSecureStorage } from '../../lib/storage/PlatformSecureStorage'
+import { log, logError } from '../../client/utils/client_logger'
 
 interface RegistrationData {
-  username: string;
-  email: string;
+  username: string
+  email: string
 }
 
-// Implement a basic in-memory DID store
-class MemoryDIDStore extends AbstractDIDStore {
-  private dids: Record<string, IIdentifier> = {};
-  private aliases: Record<string, string> = {};
-
-  async importDID(args: IIdentifier): Promise<boolean> {
-    this.dids[args.did] = args;
-    if (args.alias) {
-      this.aliases[args.alias] = args.did;
-    }
-    return true;
-  }
-
-  async getDID(args: { did: string; }): Promise<IIdentifier>;
-  async getDID(args: { alias: string; }): Promise<IIdentifier>;
-  async getDID(args: { did?: string; alias?: string; }): Promise<IIdentifier> {
-    if ('did' in args && args.did) {
-      const identifier = this.dids[args.did];
-      if (!identifier) {
-        throw new Error(`DID not found: ${args.did}`);
-      }
-      return identifier;
-    } else if ('alias' in args && args.alias) {
-      const did = this.aliases[args.alias];
-      if (!did) {
-        throw new Error(`Alias not found: ${args.alias}`);
-      }
-      return this.dids[did];
-    }
-    throw new Error('Invalid arguments: either did or alias must be provided');
-  }
-
-  async deleteDID({ did }: { did: string }): Promise<boolean> {
-    if (this.dids[did]) {
-      const alias = Object.keys(this.aliases).find(key => this.aliases[key] === did);
-      if (alias) {
-        delete this.aliases[alias];
-      }
-      delete this.dids[did];
-      return true;
-    }
-    return false;
-  }
-
-  async listDIDs(): Promise<IIdentifier[]> {
-    return Object.values(this.dids);
+function handleError(error: unknown, message: string): Error {
+  if (error instanceof Error) {
+    logError(error, message)
+    return error
+  } else {
+    const genericError = new Error(message)
+    logError(genericError, `${message}: ${String(error)}`)
+    return genericError
   }
 }
 
-// Initialize Veramo agent
-const infuraApiKey = process.env.INFURA_API_KEY;
-if (!infuraApiKey) {
-  throw new Error('INFURA_API_KEY is not set in the environment variables');
+const KMS_SECRET_KEY = process.env.NEXT_PUBLIC_KMS_SECRET_KEY
+const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_API_KEY
+
+if (!KMS_SECRET_KEY) {
+  throw new Error('NEXT_PUBLIC_KMS_SECRET_KEY is not set in the environment variables')
 }
-const secureStorage = new PlatformSecureStorage();
+
+if (!INFURA_PROJECT_ID) {
+  throw new Error('NEXT_PUBLIC_INFURA_API_KEY is not set in the environment variables')
+}
+
+const secureStorage = new PlatformSecureStorage()
+
+// Create an in-memory data store
+const dbConnection = new DataSource({
+  type: 'sqlite',
+  database: ':memory:',
+  synchronize: true,
+  logging: false,
+  entities: Entities,
+})
+
+const dataStore = new DataStore(dbConnection)
+const keyStore = new KeyStore(dbConnection)
+const didStore = new DIDStore(dbConnection)
+const secretBox = new SecretBox(KMS_SECRET_KEY)
+const privateKeyStore = new PrivateKeyStore(dbConnection, secretBox)
 
 export const agent = createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialPlugin>({
   plugins: [
     new KeyManager({
-      store: new MemoryKeyStore(),
+      store: keyStore,
       kms: {
-        local: new KeyManagementSystem(new MemoryPrivateKeyStore()),
+        local: new KeyManagementSystem(privateKeyStore),
       },
     }),
     new DIDManager({
-      store: new MemoryDIDStore(),
+      store: didStore,
       defaultProvider: 'did:ethr:goerli',
       providers: {
         'did:ethr:goerli': new EthrDIDProvider({
           defaultKms: 'local',
           network: 'goerli',
-          rpcUrl: `https://goerli.infura.io/v3/${infuraApiKey}`,
+          rpcUrl: `https://goerli.infura.io/v3/${INFURA_PROJECT_ID}`,
         }),
       },
     }),
     new DIDResolverPlugin({
       resolver: new Resolver({
-        ...ethrDidResolver({ networks: [{ name: 'goerli', rpcUrl: `https://goerli.infura.io/v3/${infuraApiKey}` }] }),
+        ...ethrDidResolver({ networks: [{ name: 'goerli', rpcUrl: `https://goerli.infura.io/v3/${INFURA_PROJECT_ID}` }] }),
         ...webDidResolver(),
       }),
     }),
     new CredentialPlugin(),
+    dataStore,
   ],
-});
+})
 
-export async function createAccount(formData: RegistrationData): Promise<IIdentifier> {
+export async function createDID(alias: string): Promise<IIdentifier> {
   try {
     const identifier = await agent.didManagerCreate({
       provider: 'did:ethr:goerli',
-      alias: formData.username,
-    });
-
-    await secureStorage.storeDID(identifier);
-
-    console.log('Account created:', { did: identifier.did, email: formData.email });
-
-    return identifier;
+      alias,
+    })
+    log('info', 'DID created', { did: identifier.did })
+    return identifier
   } catch (error) {
-    console.error('Error creating account:', error);
-    throw new Error('Failed to create account');
+    throw handleError(error, 'Failed to create DID')
   }
 }
 
-export async function verifySignature(signatureJwt: string) {
+export async function getDID(didOrAlias: string): Promise<IIdentifier> {
+  try {
+    return await agent.didManagerGet({ did: didOrAlias })
+  } catch (error) {
+    throw handleError(error, 'Failed to retrieve DID')
+  }
+}
+
+export async function createAccount(formData: RegistrationData): Promise<IIdentifier> {
+  try {
+    const identifier = await createDID(formData.username)
+    await secureStorage.storeDID(identifier)
+    log('info', 'Account created', { did: identifier.did, email: formData.email })
+    return identifier
+  } catch (error) {
+    throw handleError(error, 'Failed to create account')
+  }
+}
+
+export async function verifySignature(signatureJwt: string): Promise<boolean> {
   try {
     const result = await agent.verifyCredential({
       credential: signatureJwt,
-      proofFormat: 'jwt'
-    });
-    return result.verified;
+    })
+    return result.verified
   } catch (error) {
-    console.error('Signature verification error:', error);
-    throw new Error('Failed to verify signature');
+    throw handleError(error, 'Failed to verify signature')
   }
 }
 
-export async function authenticate(): Promise<boolean> {
+export async function authenticate(did: string): Promise<boolean> {
   try {
-    const storedDID = await secureStorage.retrieveDID();
-    if (!storedDID) {
-      throw new Error('No DID found. Please create an account first.');
+    const identifier = await getDID(did)
+    if (!identifier) {
+      throw new Error('DID not found')
     }
-
-    // Here you would typically perform biometric authentication
-    // For simplicity, we're just checking if the DID exists
-    return true;
+    log('info', 'Authentication successful', { did })
+    return true
   } catch (error) {
-    console.error('Authentication error:', error);
-    return false;
+    handleError(error, 'Authentication failed')
+    return false
   }
 }
 
-export async function issueCredential(subject: any, type: string) {
+export async function issueCredential(subject: any, type: string): Promise<any> {
   try {
-    const storedDID = await secureStorage.retrieveDID();
+    const storedDID = await secureStorage.retrieveDID()
     if (!storedDID) {
-      throw new Error('No DID found. Please create an account first.');
+      throw new Error('No DID found. Please create an account first.')
     }
 
     const credential = await agent.createVerifiableCredential({
       credential: {
+        '@context': ['https://www.w3.org/2018/credentials/v1'],
         type: ['VerifiableCredential', type],
         issuer: { id: storedDID.did },
+        issuanceDate: new Date().toISOString(),
         credentialSubject: subject,
       },
       proofFormat: 'jwt',
-    });
-    return credential;
+    })
+    log('info', 'Credential issued', { type, subject })
+    return credential
   } catch (error) {
-    console.error('Error issuing credential:', error);
-    throw new Error('Failed to issue credential');
+    throw handleError(error, 'Failed to issue credential')
+  }
+}
+
+export async function listAllDIDs(): Promise<IIdentifier[]> {
+  try {
+    const dids = await agent.didManagerFind()
+    log('info', 'DIDs listed', { count: dids.length })
+    return dids
+  } catch (error) {
+    throw handleError(error, 'Failed to list DIDs')
   }
 }
