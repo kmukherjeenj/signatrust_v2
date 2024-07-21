@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Logo from './Logo';  // Make sure this import is correct
+import Logo from '../../components/Logo';  // Make sure this import is correct
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardHeader, CardContent, CardTitle } from "../ui/card";
 import { uploadDocument, sendForSignature, fetchPendingSignatures, checkDocumentStatus } from '../../services/api';
-import { Document } from '../../../shared/types';
+import { Document } from '../../shared/types';
 
 interface QuickActionsProps {
   onDocumentUploaded: (document: Document) => void;

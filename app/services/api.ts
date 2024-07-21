@@ -1,4 +1,4 @@
-import { UserData, Document, SignatureRequest } from '../../shared/types';
+import { UserData, Document, SignatureRequest } from '../shared/types';
 
 const API_BASE_URL = '/api';
 

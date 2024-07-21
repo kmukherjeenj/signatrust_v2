@@ -5,8 +5,8 @@ import React, { useEffect } from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
-import { log, logError } from './client/utils/client_logger';
-import ErrorBoundary from './client/components/ErrorBoundary';
+import { log, logError } from './utils/client_logger';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const inter = Inter({ subsets: ['latin'] });
 

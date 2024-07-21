@@ -5,8 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createAccount } from '../../lib/auth/authService';
-import { log, logError } from '../../client/utils/client_logger';
+import { createAccount } from '../lib/auth';
+import { log, logError } from '../utils/client_logger';
 
 interface RegistrationData {
   username: string;

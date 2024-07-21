@@ -87,8 +87,8 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 // import { getSignatureStatus, signDocument } from '../../services/farcasterAPI'
 // import { SignatureStatus } from '../../services/farcasterTypes'
-import SignaturePad from '../../client/components/SignaturePad'
-import SkeletonLoader from '../../client/components/SkeletonLoader'
+import SignaturePad from '../../components/SignaturePad'
+import SkeletonLoader from '../../components/SkeletonLoader'
 
 // Mock SignatureStatus type
 interface MockSignatureStatus {

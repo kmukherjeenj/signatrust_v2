@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Header from './client/components/header';
-import Hero from './client/components/hero';
-import Features from './client/components/features';
-import HowItWorks from './client/components/howItWorks';
-import Pricing from './client/components/pricing';
-import Footer from './client/components/footer';
+import Header from './components/common/header';
+import Hero from './components/hero';
+import Features from './components/features';
+import HowItWorks from './components/howItWorks';
+import Pricing from './components/pricing';
+import Footer from './components/common/footer';
 
 const Home: React.FC = () => {
   const router = useRouter();
