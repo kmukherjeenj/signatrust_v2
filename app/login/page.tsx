@@ -1,12 +1,11 @@
-﻿// app/login/page.tsx
-
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { log, logError } from '../utils/client_logger';
 import api from '../lib/api';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -20,29 +19,48 @@ const LoginPage: React.FC = () => {
     return () => log('info', 'Login component unmounted');
   }, []);
 
+  const isDIDValid = (did: string) => {
+    // Basic DID validation logic
+    return /^did:[\w:]+$/.test(did);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     log('info', 'Login attempt', { did });
 
-    try {
-      log('info', 'Fetching DID from backend', { did });
-      const response = await api.get(`/api/identity?did=${did}`);
-      const matchingIdentifier = response.data;
+    if (!isDIDValid(did)) {
+      setError("Invalid DID format. Please enter a valid DID.");
+      setIsLoading(false);
+      return;
+    }
 
+    try {
+      log('info', 'Sending login request to backend', { did });
+      const response = await api.post('/api/login', { did });
+      const matchingIdentifier = response.data;
+    
       if (!matchingIdentifier) {
-        logError(new Error('DID not found'), 'DID not found');
         throw new Error('DID not found');
       }
-
+    
       log('info', 'Logged in successfully', { did: matchingIdentifier.did });
       setIsLoading(false);
       router.push('/dashboard');
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      logError(error, 'Login error');
-      setError(`Oops! We couldn't find your digital ID. Please double-check and try again. ${error.message}`);
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          setError("Digital ID not found. Please check and try again.");
+        } else {
+          setError(`An error occurred during login. Please try again. ${err.message}`);
+        }
+        logError(err, `Login error - DID: ${did}, Response: ${JSON.stringify(err.response?.data)}`);
+      } else {
+        const error = err instanceof Error ? err : new Error(String(err));
+        logError(error, `Unexpected login error - DID: ${did}`);
+        setError(`An unexpected error occurred. Please try again later.`);
+      }
       setIsLoading(false);
     }
   };
