@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Signatrust: Decentralized Identity and Multi-Party Document Signing System
 
-## Getting Started
+## Architecture Overview
 
-First, run the development server:
+Signatrust is built on a microservices architecture, leveraging decentralized identity (DID) for user authentication and management. It also includes a robust multi-party document signing system integrated with Google Docs.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Frontend
+- Built with Next.js and React
+- Communicates with backend services via RESTful APIs
+- Manages user interface and client-side state
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Backend
+Composed of several microservices:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Identity Service:
+   - Manages user identities and DIDs
+   - Handles user registration and authentication
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+2. Signature Service:
+   - Manages digital signatures and verifications
+   - Handles multi-party signing process
 
-## Learn More
+3. Document Service:
+   - Handles document management and storage
+   - Integrates with Google Docs API
 
-To learn more about Next.js, take a look at the following resources:
+4. Health Service:
+   - Provides system health checks and monitoring
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Notification Service:
+   - Manages notifications for signing requests and completions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Registration and Authentication Process
 
-## Deploy on Vercel
+[Previous content remains the same]
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Multi-Party Document Signing Process
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. Initiation:
+   - User initiates a signing process for a Google Doc
+   - System creates a signing session and notifies all parties
+
+2. Signing:
+   - Each party signs the document using their DID
+   - Signatures are stored in document metadata
+   - System maintains an audit trail of all actions
+
+3. Verification:
+   - System verifies each signature
+   - Parties can verify all signatures on the document
+
+4. Finalization:
+   - Once all parties have signed, system adds a visible signature block
+   - System generates legal proof of signing
+   - Document is marked as fully signed and parties are notified
+
+## Key Features
+
+- Multi-party signing support
+- Integration with Google Docs
+- Legally binding digital signatures
+- Non-alteration of core document content
+- Comprehensive audit trail
+- Notification system for signing events
+
+## Legal and Security Considerations
+
+- Compliance with e-signature laws (e.g., ESIGN Act, eIDAS Regulation)
+- Secure key management for all signers
+- Tamper-evident audit trail
+- Strict access controls
+- Version control during signing process
+
+## Deployment Instructions
+
+[Previous content remains the same]
+
+## Future Enhancements
+
+- Extend integration to other platforms (Microsoft Office, PDF documents)
+- Create a generalized document signing service for various document types
+- Implement blockchain-based storage for audit trail and signatures
+- Develop a user-friendly dashboard for managing signing processes
+- Implement on-chain DID registration using Ethereum
+- Add multi-factor authentication
+- Implement a more robust session management system
+- Add support for DID-based key management and recovery

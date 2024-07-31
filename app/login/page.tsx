@@ -30,6 +30,12 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     log('info', 'Login attempt', { did });
 
+    if (!did.trim()) {
+      setError("DID cannot be empty.");
+      setIsLoading(false);
+      return;
+    }
+
     if (!isDIDValid(did)) {
       setError("Invalid DID format. Please enter a valid DID.");
       setIsLoading(false);
@@ -38,30 +44,69 @@ const LoginPage: React.FC = () => {
 
     try {
       log('info', 'Sending login request to backend', { did });
-      const response = await api.post('/api/login', { did });
-      const matchingIdentifier = response.data;
-    
-      if (!matchingIdentifier) {
-        throw new Error('DID not found');
-      }
-    
-      log('info', 'Logged in successfully', { did: matchingIdentifier.did });
-      setIsLoading(false);
-      router.push('/dashboard');
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status === 404) {
-          setError("Digital ID not found. Please check and try again.");
-        } else {
-          setError(`An error occurred during login. Please try again. ${err.message}`);
-        }
-        logError(err, `Login error - DID: ${did}, Response: ${JSON.stringify(err.response?.data)}`);
+      //const response = await api.post('/api/login', { did });
+      //const response = await api.post('/identity/login', { did });
+      const response = await api.post('/identity/login', { did }, { withCredentials: true });
+      
+      if (response.data && response.data.identity && response.data.identity.did) {
+        const matchingIdentifier = response.data.identity;
+        log('info', 'Logged in successfully', { did: matchingIdentifier.did });
+        setIsLoading(false);
+        //router.push(`/dashboard`);
+        router.push(`/dashboard?did=${encodeURIComponent(matchingIdentifier.did)}`);
       } else {
-        const error = err instanceof Error ? err : new Error(String(err));
-        logError(error, `Unexpected login error - DID: ${did}`);
-        setError(`An unexpected error occurred. Please try again later.`);
+        throw new Error('Login successful but DID not returned');
       }
+      //const matchingIdentifier = response.data;
+      //if (matchingIdentifier && matchingIdentifier.did) {
+      //  log('info', 'Logged in successfully', { did: matchingIdentifier.did });
+        // Remove this line as we're no longer storing the DID in sessionStorage
+        // sessionStorage.setItem('userDID', matchingIdentifier.did);
+      //  setIsLoading(false);
+        //router.push(`/dashboard?did=${encodeURIComponent(matchingIdentifier.did)}`);
+      //  router.push(`/dashboard`);
+      //} else {
+      //  throw new Error('Login successful but DID not returned');
+      //}
+      //localStorage.setItem('authToken', token);
+      //localStorage.setItem('userDID', returnedDid);
+      //log('info', 'Logged in successfully', { did: matchingIdentifier.did });
+      //setIsLoading(false);
+      //router.push('/dashboard');
+    } catch (err) {
       setIsLoading(false);
+      if (axios.isAxiosError(err)) {
+        switch (err.response?.status) {
+          case 400:
+            setError("Invalid request. Please check your input and try again.");
+            break;
+          case 401:
+            setError("Authentication failed. Please check your DID and try again.");
+            break;
+          case 404:
+            setError("Digital ID not found. Please check and try again or register if you're a new user.");
+            break;
+          case 429:
+            setError("Too many login attempts. Please try again later.");
+            break;
+          case 500:
+            setError("Server error. Please try again later or contact support.");
+            break;
+          default:
+            setError(`An error occurred during login. Please try again. ${err.response?.data?.error || err.message}`);
+        }
+        logError(err, `Login error - DID: ${did}, Status: ${err.response?.status}, Response: ${JSON.stringify(err.response?.data)}`);
+      } else if (err instanceof Error) {
+        if (err.message === 'Login successful but DID not returned') {
+          setError("Login was successful, but there was an issue retrieving your account details. Please try again.");
+        } else {
+          setError("An unexpected error occurred. Please try again later.");
+        }
+        logError(err, `Unexpected login error - DID: ${did}`);
+      } else {
+        setError("An unknown error occurred. Please try again later.");
+        logError(new Error(String(err)), `Unknown login error - DID: ${did}`);
+      }
     }
   };
 
