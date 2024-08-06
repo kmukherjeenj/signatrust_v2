@@ -6,6 +6,11 @@ import Link from 'next/link';
 import { log, logError } from '../utils/client_logger';
 import api from '../lib/api';
 import axios from 'axios';
+import * as snarkjs from 'snarkjs';
+
+function stringToBigInt(str: string): string {
+  return BigInt('0x' + Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')).toString();
+}
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -24,29 +29,80 @@ const LoginPage: React.FC = () => {
     return /^did:[\w:]+$/.test(did);
   };
 
+  async function generateProof(did: string, challenge: string) {
+
+    try {
+      // Assuming these files are served from your backend or a CDN
+      //const wasmPath = '/circuits/auth.wasm';
+      //const zkeyPath = '/circuits/auth.zkey';
+      const wasmPath = 'http://localhost:3000/circuits/auth.wasm';
+      const zkeyPath = 'http://localhost:3000/circuits/auth.zkey';
+  
+      console.log('Fetching WASM from:', wasmPath);
+      const wasmResponse = await fetch(wasmPath);
+      if (!wasmResponse.ok) {
+        console.error('WASM fetch failed:', wasmResponse.status, wasmResponse.statusText);
+        const text = await wasmResponse.text();
+        console.error('Response text:', text);
+        throw new Error(`Failed to fetch WASM: ${wasmResponse.status} ${wasmResponse.statusText}`);
+      }
+      const wasmBuffer = await wasmResponse.arrayBuffer();
+      console.log('WASM fetched successfully');
+      /*const input = {
+        did: BigInt('0x' + Buffer.from(did).toString('hex')).toString(),
+        challenge: BigInt('0x' + Buffer.from(challenge).toString('hex')).toString()
+      };*/
+  
+      const input = {
+        pubKey: stringToBigInt(did),
+        signature: stringToBigInt(challenge),
+        message: stringToBigInt(challenge) // or another appropriate value
+      };
+
+      console.log('Generating proof with input:', input);
+  
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+        input,
+        wasmPath,
+        zkeyPath
+      );
+  
+      console.log('Proof generated successfully');
+      return { proof, publicSignals };
+    } catch (error) {
+      console.error('Error generating proof:', error);
+      throw new Error('Failed to generate proof');
+    }
+  }
+
+  const generateChallenge = (): string => {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     log('info', 'Login attempt', { did });
 
-    if (!did.trim()) {
-      setError("DID cannot be empty.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!isDIDValid(did)) {
+    if (!did.trim() || !isDIDValid(did)){
       setError("Invalid DID format. Please enter a valid DID.");
       setIsLoading(false);
       return;
     }
 
     try {
-      log('info', 'Sending login request to backend', { did });
-      //const response = await api.post('/api/login', { did });
-      //const response = await api.post('/identity/login', { did });
-      const response = await api.post('/identity/login', { did }, { withCredentials: true });
+    // Generate a challenge (this should ideally come from the backend)
+      const challenge = generateChallenge();
+
+    // Generate proof (this is a placeholder - you need to implement the actual proof generation)
+      const { proof, publicSignals } = await generateProof(did, challenge );
+
+      log('info', 'Sending login request to backend', { did, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
+      //const response = await api.post('/identity/login', { did }, { withCredentials: true });
+      const response = await api.post('/identity/login', { did, proof, publicSignals }, { withCredentials: true });
       
       if (response.data && response.data.identity && response.data.identity.did) {
         const matchingIdentifier = response.data.identity;
@@ -57,22 +113,6 @@ const LoginPage: React.FC = () => {
       } else {
         throw new Error('Login successful but DID not returned');
       }
-      //const matchingIdentifier = response.data;
-      //if (matchingIdentifier && matchingIdentifier.did) {
-      //  log('info', 'Logged in successfully', { did: matchingIdentifier.did });
-        // Remove this line as we're no longer storing the DID in sessionStorage
-        // sessionStorage.setItem('userDID', matchingIdentifier.did);
-      //  setIsLoading(false);
-        //router.push(`/dashboard?did=${encodeURIComponent(matchingIdentifier.did)}`);
-      //  router.push(`/dashboard`);
-      //} else {
-      //  throw new Error('Login successful but DID not returned');
-      //}
-      //localStorage.setItem('authToken', token);
-      //localStorage.setItem('userDID', returnedDid);
-      //log('info', 'Logged in successfully', { did: matchingIdentifier.did });
-      //setIsLoading(false);
-      //router.push('/dashboard');
     } catch (err) {
       setIsLoading(false);
       if (axios.isAxiosError(err)) {
