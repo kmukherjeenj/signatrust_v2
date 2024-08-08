@@ -1,80 +1,35 @@
-// lib/storage/PlatformSecureStorage.ts
-
 import { SecureStorage } from './SecureStorage';
-import { WindowsTPMStorage } from './windowsTPMStorage';
-import { MacOSKeychainStorage } from './macOSKeychainStorage';
-import { IOSAndroidSecureEnclaveStorage } from './iOSAndroidSecureEnclaveStorage';
-import { IIdentifier } from '@veramo/core';
-
-class FallbackStorage implements SecureStorage {
-  private storage: Map<string, any> = new Map();
-
-  async storeDID(identifier: IIdentifier): Promise<void> {
-    this.storage.set(`did:${identifier.did}`, identifier);
-  }
-
-  async retrieveDID(): Promise<IIdentifier | null> {
-    const entries = Array.from(this.storage.entries());
-    for (const [key, value] of entries) {
-      if (key.startsWith('did:')) {
-        return value as IIdentifier;
-      }
-    }
-    return null;
-  }
-
-  async storeKey(key: any): Promise<void> {
-    this.storage.set('key', key);
-  }
-
-  async retrieveKey(): Promise<any> {
-    return this.storage.get('key');
-  }
-
-  async deleteData(key: string): Promise<void> {
-    this.storage.delete(key);
-  }
-}
+import { WebSecureStorage } from './WebSecureStorage';
+import { IOSSecureEnclaveStorage } from './IOSSecureEnclaveStorage';
+import { AndroidKeystoreStorage } from './AndroidKeystoreStorage';
 
 export class PlatformSecureStorage implements SecureStorage {
   private storage: SecureStorage;
 
   constructor() {
-    const storageType = process.env.SECURE_STORAGE_TYPE || 'fallback';
-
-    switch (storageType) {
-      case 'windows':
-        this.storage = new WindowsTPMStorage();
-        break;
-      case 'macos':
-        this.storage = new MacOSKeychainStorage();
-        break;
-      case 'mobile':
-        this.storage = new IOSAndroidSecureEnclaveStorage();
-        break;
-      default:
-        console.warn('Using fallback storage. This is not secure for production use.');
-        this.storage = new FallbackStorage();
+    if (typeof window !== 'undefined') {
+      // Browser environment
+      this.storage = new WebSecureStorage();
+    } else if (process.env.NEXT_RUNTIME === 'nodejs') {
+      // Server-side rendering
+      this.storage = new WebSecureStorage(); // Fallback to web storage on server
+    } else {
+      // Assume native mobile environment
+      // In a real-world scenario, you'd need to detect iOS vs Android
+      // This is a simplified example
+      this.storage = process.env.IS_IOS ? new IOSSecureEnclaveStorage() : new AndroidKeystoreStorage();
     }
   }
 
-  async storeDID(identifier: IIdentifier): Promise<void> {
-    return this.storage.storeDID(identifier);
+  async storeDID(did: string, publicKey: string, encryptedPrivateKey: string): Promise<void> {
+    return this.storage.storeDID(did, publicKey, encryptedPrivateKey);
   }
 
-  async retrieveDID(): Promise<IIdentifier | null> {
-    return this.storage.retrieveDID();
+  async retrieveDID(did: string): Promise<{ publicKey: string; encryptedPrivateKey: string; } | null> {
+    return this.storage.retrieveDID(did);
   }
 
-  async storeKey(key: any): Promise<void> {
-    return this.storage.storeKey(key);
-  }
-
-  async retrieveKey(): Promise<any> {
-    return this.storage.retrieveKey();
-  }
-
-  async deleteData(key: string): Promise<void> {
-    return this.storage.deleteData(key);
+  async deleteData(did: string): Promise<void> {
+    return this.storage.deleteData(did);
   }
 }
