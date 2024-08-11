@@ -1,30 +1,24 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { User, File, Upload, Key, Send, CheckSquare, Clock, Search, LogOut, Menu } from 'lucide-react';
+import { useRouter, useSearchParams  } from 'next/navigation';
+import { User, File, LogOut, Menu } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { log, logError } from '../utils/client_logger';
-import api from '../lib/api';
-import { useSearchParams } from 'next/navigation';
+import { getDocuments } from '../lib/api';
 import { QuickActions } from '../components/Dashboard/QuickActions';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
+import DocumentList from '../components/Dashboard/DocumentList';
+import { Document } from '../shared/types';
+import api from '../lib/api';
 
 interface UserData {
   did: string;
   name?: string;
   email?: string;
-}
-
-interface Document {
-  id: string;
-  name: string;
-  status: 'pending' | 'signed' | 'expired';
-  date: string;
 }
 
 const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
@@ -36,28 +30,6 @@ const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
     </Button>
   </div>
 );
-
-const ErrorFallbackWrapper: React.FC = () => {
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const errorHandler = (event: ErrorEvent) => {
-      setError(event.error);
-    };
-
-    window.addEventListener('error', errorHandler);
-
-    return () => {
-      window.removeEventListener('error', errorHandler);
-    };
-  }, []);
-
-  if (error) {
-    return <ErrorFallback error={error} />;
-  }
-
-  return null;
-};
 
 const LoadingFallback: React.FC = () => (
   <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -71,8 +43,7 @@ const DashboardContent: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  //const did = searchParams.get('did');
-  const did = searchParams.get('did') || sessionStorage.getItem('userDID'); 
+  const did = searchParams.get('did') || sessionStorage.getItem('userDID');
 
   const fetchUserData = useCallback(async () => {
     if (!did) {
@@ -82,24 +53,17 @@ const DashboardContent: React.FC = () => {
 
     try {
       log('info', 'Fetching user data', { did });
-      const response = await api.get(`/identity/${encodeURIComponent(did)}`);
-      //const response = await api.get(`/${encodeURIComponent(did)}`); 
-      const userData = response.data;
-
+      // Replace this with actual API call when ready
       setUser({
-        did: userData.did,
-        name: userData.name || 'Unknown',
-        email: userData.email || undefined,
+        did: did,
+        name: 'John Doe',
+        email: 'john@example.com',
       });
-      log('info', 'User data fetched successfully', { did: userData.did });
+      log('info', 'User data fetched successfully', { did });
 
-      // Fetch documents (mock data for now)
-      setDocuments([
-        { id: '1', name: 'Contract A', status: 'pending', date: '2024-07-18' },
-        { id: '2', name: 'Agreement B', status: 'signed', date: '2024-07-17' },
-        { id: '3', name: 'Proposal C', status: 'expired', date: '2024-07-16' },
-      ]);
-      log('info', 'Documents fetched', { count: 3 });
+      const fetchedDocuments = await getDocuments();
+      setDocuments(fetchedDocuments);
+      log('info', 'Documents fetched', { count: fetchedDocuments.length });
     } catch (error) {
       logError(error instanceof Error ? error : new Error(String(error)), 'Error fetching user data');
       setUser(null);
@@ -108,7 +72,6 @@ const DashboardContent: React.FC = () => {
 
   useEffect(() => {
     log('info', 'Dashboard component mounted');
-    //log('info', 'Dashboard mounted, DID sources', { didFromUrl, didFromSession });
     if (!did) {
       log('info', 'No DID provided, redirecting to login');
       sessionStorage.setItem('intendedDestination', '/dashboard');
@@ -122,7 +85,6 @@ const DashboardContent: React.FC = () => {
   const handleLogout = async () => {
     try {
       log('info', 'User logout initiated');
-      // Implement logout logic here
       sessionStorage.removeItem('userDID');
       router.push('/login');
     } catch (error) {
@@ -130,22 +92,33 @@ const DashboardContent: React.FC = () => {
     }
   };
 
+  const handleSign = (documentId: string) => {
+    router.push(`/documents/${documentId}/sign`);
+  };
+
   const handleDocumentUploaded = (newDocument: Document) => {
     setDocuments(prevDocuments => [...prevDocuments, newDocument]);
   };
 
   const handleDocumentSent = () => {
-    // Refresh documents list or show a success message
     log('info', 'Document sent for signature');
   };
 
+  const handleUpload = () => {
+    router.push('/upload-document');
+  };
+
+  const handleViewPending = () => {
+    router.push('/pending-signatures');
+  };
+
+  const handleCheckStatus = () => {
+    // Implement check status logic here
+    log('info', 'Checking document status');
+  };
+
   if (!user) {
-    //return <LoadingFallback />;
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        Loading...
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
   return (
@@ -155,7 +128,7 @@ const DashboardContent: React.FC = () => {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center space-x-4">
             <Avatar>
-              <AvatarImage src="/path/to/avatar.png" alt="User Avatar" />
+            <AvatarImage src="/images/default-avatar.png" alt={`${user.name}'s avatar`} />
               <AvatarFallback>{user.name ? user.name.charAt(0) : 'U'}</AvatarFallback>
             </Avatar>
             <span className="hidden md:inline">{user.name}</span>
@@ -189,32 +162,17 @@ const DashboardContent: React.FC = () => {
                 <CardTitle>Recent Documents</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {documents.map(doc => (
-                    <div key={doc.id} className="flex items-center justify-between p-2 bg-gray-800 rounded-lg">
-                      <div className="flex items-center">
-                        <File className="mr-2 h-4 w-4" />
-                        <span>{doc.name}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          doc.status === 'pending' ? 'bg-yellow-500' :
-                          doc.status === 'signed' ? 'bg-green-500' :
-                          'bg-red-500'
-                        }`}>
-                          {doc.status}
-                        </span>
-                        <span className="ml-2 text-sm text-gray-400">{doc.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DocumentList documents={documents} onSign={handleSign} />
               </CardContent>
             </Card>
           </div>
           
           <div>
             <QuickActions
+              onUpload={handleUpload}
+              onSend={handleDocumentSent}
+              onViewPending={handleViewPending}
+              onCheckStatus={handleCheckStatus}
               onDocumentUploaded={handleDocumentUploaded}
               onDocumentSent={handleDocumentSent}
             />
@@ -251,7 +209,11 @@ const DashboardContent: React.FC = () => {
 
 const DashboardPage: React.FC = () => {
   return (
-    <ErrorBoundary fallback={<ErrorFallbackWrapper />}>
+    <ErrorBoundary
+    fallback={
+      <ErrorFallback error={new Error("An unexpected error occurred.")} />
+    }
+  >
       <Suspense fallback={<LoadingFallback />}>
         <DashboardContent />
       </Suspense>

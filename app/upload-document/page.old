@@ -1,12 +1,10 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../lib/api';
 
 export default function UploadDocument() {
   const [file, setFile] = useState<File | null>(null);
-  const [storageOption, setStorageOption] = useState('cloud');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const router = useRouter();
@@ -21,12 +19,9 @@ export default function UploadDocument() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('storageOption', storageOption);
-
-      await api.post('/api/documents', formData);
-      router.push('/dashboard');
+      // Implement document upload logic here
+      // On success:
+      router.push('/documents/');
     } catch (err) {
       setError('Upload failed. Please try again.');
       console.error(err);
@@ -45,6 +40,7 @@ export default function UploadDocument() {
           Securely upload your documents to SignaTrust
         </p>
       </div>
+
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -60,26 +56,13 @@ export default function UploadDocument() {
                 className="mt-1 block w-full text-sm text-gray-300 border-gray-600 bg-gray-700 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
-            <div>
-              <label htmlFor="storage-option" className="block text-sm font-medium text-gray-300">
-                Choose Storage Option
-              </label>
-              <select
-                id="storage-option"
-                value={storageOption}
-                onChange={(e) => setStorageOption(e.target.value)}
-                className="mt-1 block w-full text-sm text-gray-300 border-gray-600 bg-gray-700 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="cloud">Cloud Storage</option>
-                <option value="local">Local Storage</option>
-                <option value="ipfs">IPFS (paid)</option>
-              </select>
-            </div>
+
             {error && (
               <div className="text-red-500 text-sm mt-2">
                 {error}
               </div>
             )}
+
             <div>
               <button
                 type="submit"
@@ -90,6 +73,28 @@ export default function UploadDocument() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <h3 className="text-lg font-medium text-white mb-4">Why Store Documents on Your Own Drive?</h3>
+          <p className="text-sm text-gray-300 mb-4">
+            By storing your documents on your own drive, you retain complete control over your data. This ensures your sensitive information is kept private and secure, as it is not stored on third-party servers.
+          </p>
+          <h4 className="text-md font-medium text-white mb-2">Benefits:</h4>
+          <ul className="list-disc list-inside text-sm text-gray-300 mb-4">
+            <li>Enhanced Privacy: Your documents are only accessible by you, preventing unauthorized access.</li>
+            <li>Data Ownership: You retain full ownership of your data, with no risk of it being used without your consent.</li>
+            <li>Security: Storing data on your own drive reduces the risk of data breaches associated with centralized servers.</li>
+            <li>Flexibility: You can choose where and how to store your documents, using your preferred storage solutions.</li>
+          </ul>
+          <p className="text-sm text-gray-300 mb-4">
+            Our platform integrates seamlessly with your existing storage solutions, ensuring a smooth and secure document management experience.
+          </p>
+          <p className="text-sm text-gray-300 mb-4">
+            Remember to regularly back up your data and use strong passwords to protect your storage drive. This way, you can enjoy the benefits of self-sovereign document storage without sacrificing security or privacy.
+          </p>
         </div>
       </div>
     </div>

@@ -1,141 +1,39 @@
-import React, { useState } from 'react';
-import { Upload, Send, CheckSquare, Clock } from 'lucide-react';
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Card, CardHeader, CardContent, CardTitle } from "../ui/card";
-import { uploadDocument, sendForSignature, fetchPendingSignatures, checkDocumentStatus } from '../../services/api';
+import React from 'react';
+import { uploadDocument, createSignatureRequest, getPendingSignatures, getDocumentStatus } from '../../lib/api';
+import { Button } from '../ui/button';
 import { Document } from '../../shared/types';
 
 interface QuickActionsProps {
-  onDocumentUploaded: (document: Document) => void;
+  onUpload: () => void;
+  onSend: () => void;
+  onViewPending: () => void;
+  onCheckStatus: () => void;
+  onDocumentUploaded: (newDocument: Document) => void;
   onDocumentSent: () => void;
 }
 
-export const QuickActions: React.FC<QuickActionsProps> = ({ onDocumentUploaded, onDocumentSent }) => {
-  const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ fileName: '', documentId: '', recipientEmail: '' });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleUploadDocument = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      formData.append('fileName', form.fileName.value);
-      try {
-        const newDocument = await uploadDocument(formData);
-        onDocumentUploaded(newDocument);
-        setActiveAction(null);
-      } catch (error) {
-        console.error('Error uploading document:', error);
-        // Handle error (e.g., show error message to user)
-      }
-    }
-  };
-
-  const handleSendForSignature = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      await sendForSignature({ documentId: formData.documentId, recipientEmail: formData.recipientEmail });
-      onDocumentSent();
-      setActiveAction(null);
-    } catch (error) {
-      console.error('Error sending document for signature:', error);
-      // Handle error (e.g., show error message to user)
-    }
-  };
-
-  const handleViewPendingSignatures = async () => {
-    try {
-      const pendingDocuments = await fetchPendingSignatures();
-      alert(`Pending Signatures:\n${pendingDocuments.map(doc => doc.name).join('\n')}`);
-    } catch (error) {
-      console.error('Error fetching pending signatures:', error);
-      // Handle error (e.g., show error message to user)
-    }
-  };
-
-  const handleCheckDocumentStatus = async () => {
-    const documentId = prompt('Enter document ID to check status:');
-    if (documentId) {
-      try {
-        const document = await checkDocumentStatus(documentId);
-        alert(`Document Status:\n${document.name}: ${document.status}`);
-      } catch (error) {
-        console.error('Error checking document status:', error);
-        // Handle error (e.g., show error message to user)
-      }
-    }
-  };
-
+export const QuickActions: React.FC<QuickActionsProps> = ({
+  onUpload,
+  onSend,
+  onViewPending,
+  onCheckStatus,
+  onDocumentUploaded,
+  onDocumentSent
+}) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {activeAction === 'upload' ? (
-            <form onSubmit={handleUploadDocument} className="space-y-4">
-              <Input 
-                name="fileName" 
-                placeholder="Enter document name" 
-                value={formData.fileName}
-                onChange={handleInputChange}
-              />
-              <Input type="file" name="file" />
-              <Button type="submit">Upload</Button>
-              <Button type="button" onClick={() => setActiveAction(null)}>Cancel</Button>
-            </form>
-          ) : (
-            <Button className="w-full justify-start" onClick={() => setActiveAction('upload')}>
-              <Upload className="mr-2" size={18} />
-              Upload New Document
-            </Button>
-          )}
-
-          {activeAction === 'send' ? (
-            <form onSubmit={handleSendForSignature} className="space-y-4">
-              <Input 
-                name="documentId" 
-                placeholder="Enter document ID" 
-                value={formData.documentId}
-                onChange={handleInputChange}
-              />
-              <Input 
-                name="recipientEmail" 
-                type="email" 
-                placeholder="Enter recipient email" 
-                value={formData.recipientEmail}
-                onChange={handleInputChange}
-              />
-              <Button type="submit">Send</Button>
-              <Button type="button" onClick={() => setActiveAction(null)}>Cancel</Button>
-            </form>
-          ) : (
-            <Button className="w-full justify-start" onClick={() => setActiveAction('send')}>
-              <Send className="mr-2" size={18} />
-              Send Document for Signature
-            </Button>
-          )}
-
-          <Button className="w-full justify-start" onClick={handleViewPendingSignatures}>
-            <CheckSquare className="mr-2" size={18} />
-            View Pending Signatures
-          </Button>
-
-          <Button className="w-full justify-start" onClick={handleCheckDocumentStatus}>
-            <Clock className="mr-2" size={18} />
-            Check Document Status
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Button onClick={onUpload} className="w-full flex justify-start bg-blue-500 text-white px-4 py-2 rounded">
+        Upload New Document
+      </Button>
+      <Button onClick={onSend} className="w-full flex justify-start bg-blue-500 text-white px-4 py-2 rounded">
+        Send Document for Signature
+      </Button>
+      <Button onClick={onViewPending} className="w-full flex justify-start bg-blue-500 text-white px-4 py-2 rounded">
+        View Pending Signatures
+      </Button>
+      <Button onClick={onCheckStatus} className="w-full flex justify-start bg-blue-500 text-white px-4 py-2 rounded">
+        Check Document Status
+      </Button>
+    </div>
   );
 };

@@ -7,6 +7,7 @@ import { logError } from '../utils/client_logger';
 
 interface ErrorBoundaryProps {
   fallback: React.ReactNode;
+  //fallback: React.ComponentType<{ error: Error }>;
   children: React.ReactNode;
 }
 
@@ -15,7 +16,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+//class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  class ErrorBoundary extends React.Component<ErrorBoundaryProps, { hasError: boolean; error: Error | null }> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
