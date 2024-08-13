@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../lib/api';
+import { uploadDocument } from '../lib/api';
 
 export default function UploadDocument() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,7 +26,8 @@ export default function UploadDocument() {
       formData.append('file', file);
       formData.append('storageOption', storageOption);
 
-      await api.post('/api/documents', formData);
+      //await api.post('/document', formData);
+      await uploadDocument(file, { storageOption });
       router.push('/dashboard');
     } catch (err) {
       setError('Upload failed. Please try again.');

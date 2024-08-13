@@ -106,6 +106,10 @@ const LoginPage: React.FC = () => {
       
       if (response.data && response.data.identity && response.data.identity.did) {
         const matchingIdentifier = response.data.identity;
+        // Store the authentication data
+        localStorage.setItem('zkProof', JSON.stringify(proof));
+        localStorage.setItem('publicSignals', JSON.stringify(publicSignals));
+        localStorage.setItem('challenge', challenge);
         log('info', 'Logged in successfully', { did: matchingIdentifier.did });
         setIsLoading(false);
         //router.push(`/dashboard`);

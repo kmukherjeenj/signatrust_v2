@@ -56,8 +56,8 @@ const DashboardContent: React.FC = () => {
       // Replace this with actual API call when ready
       setUser({
         did: did,
-        name: 'John Doe',
-        email: 'john@example.com',
+        name: 'Kushal Mukherjee',
+        email: 'kushal.mukherjee@example.com',
       });
       log('info', 'User data fetched successfully', { did });
 
@@ -102,6 +102,7 @@ const DashboardContent: React.FC = () => {
 
   const handleDocumentSent = () => {
     log('info', 'Document sent for signature');
+    router.push('/signature-request')
   };
 
   const handleUpload = () => {
