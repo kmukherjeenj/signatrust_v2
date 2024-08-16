@@ -6,6 +6,10 @@ const nextConfig = {
           source: '/circuits/:path*',
           destination: 'http://localhost:3000/circuits/:path*',
         },
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:3000/api/:path*',
+        },
       ];
     },
   };

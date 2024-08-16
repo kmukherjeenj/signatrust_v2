@@ -39,17 +39,8 @@ export const getDocuments = async (): Promise<Document[]> => {
   return response.data;
 };
 
-/*export const uploadDocument = async (document: string, metadata: any): Promise<Document> => {
-  const response = await api.post('/upload', { document, metadata });
-  return response.data;
-};*/
-
-export const uploadDocument = async (file: File, metadata: any): Promise<Document> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('metadata', JSON.stringify(metadata));
-
-  const response = await api.post('/document/upload', formData, {
+export const uploadDocument = async (formData: FormData): Promise<Document> => {
+  const response = await api.post('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -81,13 +72,19 @@ export const getDocumentStatus = async (documentId: string): Promise<string> => 
   return response.data;
 };
 
-export const getPendingSignatures = async (): Promise<Document[]> => {
-  const response = await api.get('/document/pending-signatures');
+export const getPendingSignatures = async (): Promise<SignatureRequest[]> => {
+  const response = await api.get('/pending-signatures');
   return response.data;
 };
 
-export const createSignatureRequest = async (documentId: string, signers: string[]): Promise<void> => {
-  await api.post('/document/signature-request', { documentId, signers });
+export const createSignatureRequest = async (documentId: string, signers: string[]): Promise<SignatureRequest> => {
+  const response = await api.post('/signature-requests', { documentId, signers });
+  return response.data;
+};
+
+export const getSignatureRequests = async (): Promise<SignatureRequest[]> => {
+  const response = await api.get('/signature-requests');
+  return response.data;
 };
 
 export default api;

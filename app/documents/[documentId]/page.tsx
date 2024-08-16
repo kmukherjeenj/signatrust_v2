@@ -1,143 +1,58 @@
-/*'use client'
-
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { getSignatureStatus, signDocument } from '../../services/farcasterAPI'
-import { SignatureStatus } from '../../services/farcasterTypes'
-import SignaturePad from '../../components/SignaturePad'
-import SkeletonLoader from '../../components/SkeletonLoader'
-
-
-const PendingSignatures: React.FC = () => {
-  const [pendingSignatures, setPendingSignatures] = useState<SignatureStatus[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentSignature, setCurrentSignature] = useState<null | { id: string; documentName: string }>(null)
-
-  useEffect(() => {
-    fetchPendingSignatures()
-  }, [])
-
-  const fetchPendingSignatures = async () => {
-    try {
-      // Adjusted this part to fetch all pending signatures correctly
-      const signatureIds = ['pendingId1', 'pendingId2'] // Example IDs, replace with real logic to get pending IDs
-      const signatures: SignatureStatus[] = await Promise.all(
-        signatureIds.map(id => getSignatureStatus(id))
-      )
-      setPendingSignatures(signatures)
-      setLoading(false)
-    } catch (error) {
-      console.error('Error fetching pending signatures:', error)
-      setLoading(false)
-    }
-  }
-
-  const handleSign = (signature: { id: string; documentName: string }) => {
-    setCurrentSignature(signature)
-  }
-
-  const handleSignatureComplete = async (signatureData: string) => {
-    try {
-      if (currentSignature) {
-        await signDocument(currentSignature.id, signatureData)
-        setCurrentSignature(null)
-        fetchPendingSignatures()
-      }
-    } catch (error) {
-      console.error('Error signing document:', error)
-      alert('Failed to sign document. Please try again.')
-    }
-  }
-
-  if (loading) return <SkeletonLoader />
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="pending-signatures"
-    >
-      <h1>Pending Signatures</h1>
-      {currentSignature ? (
-        <div>
-          <h2>Sign Document: {currentSignature.documentName}</h2>
-          <SignaturePad onComplete={handleSignatureComplete} />
-        </div>
-      ) : (
-        <ul>
-          {pendingSignatures.map((signature) => (
-            <li key={signature.id}>
-              <span>{signature.documentName}</span>
-              <button onClick={() => handleSign(signature)}>Sign</button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </motion.div>
-  )
-}
-
-export default PendingSignatures
-*/
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-// import { getSignatureStatus, signDocument } from '../../services/farcasterAPI'
-// import { SignatureStatus } from '../../services/farcasterTypes'
-import SignaturePad from '../../components/SignaturePad'
-import SkeletonLoader from '../../components/SkeletonLoader'
-
-// Mock SignatureStatus type
-interface MockSignatureStatus {
-  id: string;
-  documentName: string;
-  status: 'pending' | 'completed';
-}
+import { getPendingSignatures, signDocument } from '../../lib/api'
+import { SignatureRequest, Document } from '../../shared/types'
+import SignatureRequestList from '../../components/SignatureRequestList'
+import { Button } from '../../components/ui/button'
+import { Card, CardHeader, CardContent, CardTitle } from '../../components/ui/card'
+import { log, logError } from '../../utils/client_logger'
 
 const PendingSignatures: React.FC = () => {
-  const [pendingSignatures, setPendingSignatures] = useState<MockSignatureStatus[]>([])
+  const [pendingSignatures, setPendingSignatures] = useState<SignatureRequest[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentSignature, setCurrentSignature] = useState<null | { id: string; documentName: string }>(null)
+  const [currentSignature, setCurrentSignature] = useState<SignatureRequest | null>(null)
 
   useEffect(() => {
     fetchPendingSignatures()
   }, [])
 
   const fetchPendingSignatures = async () => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockSignatures: MockSignatureStatus[] = [
-        { id: 'pendingId1', documentName: 'Document A', status: 'pending' },
-        { id: 'pendingId2', documentName: 'Document B', status: 'pending' },
-      ]
-      setPendingSignatures(mockSignatures)
+    try {
+      setLoading(true)
+      const signatures = await getPendingSignatures()
+      setPendingSignatures(signatures)
+      log('info', 'Fetched pending signatures', { count: signatures.length })
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error(String(error)), 'Error fetching pending signatures')
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  const handleSign = (signature: { id: string; documentName: string }) => {
+  const handleSign = (signature: SignatureRequest) => {
     setCurrentSignature(signature)
   }
 
-  const handleSignatureComplete = async (signatureData: string) => {
+  const handleSignatureComplete = async (signatureId: string) => {
     try {
-      if (currentSignature) {
-        // Simulate signing process
-        console.log(`Signing document ${currentSignature.id} with data: ${signatureData}`)
+      if (currentSignature && currentSignature.id === signatureId) {
+        // In a real implementation, you'd capture the signature data here
+        const signatureData = "placeholder_signature_data";
+        await signDocument(signatureId, signatureData)
+        log('info', 'Document signed successfully', { documentId: signatureId })
         setCurrentSignature(null)
-        // Remove the signed document from pending signatures
-        setPendingSignatures(prev => prev.filter(sig => sig.id !== currentSignature.id))
+        // Refresh the list of pending signatures
+        await fetchPendingSignatures()
       }
     } catch (error) {
-      console.error('Error signing document:', error)
+      logError(error instanceof Error ? error : new Error(String(error)), 'Error signing document')
       alert('Failed to sign document. Please try again.')
     }
   }
 
-  if (loading) return <SkeletonLoader />
+  if (loading) return <div>Loading...</div>
 
   return (
     <motion.div
@@ -146,21 +61,47 @@ const PendingSignatures: React.FC = () => {
       exit={{ opacity: 0 }}
       className="pending-signatures"
     >
-      <h1>Pending Signatures</h1>
+      <h1 className="text-2xl font-bold mb-6">Pending Signatures</h1>
       {currentSignature ? (
-        <div>
-          <h2>Sign Document: {currentSignature.documentName}</h2>
-          <SignaturePad onComplete={handleSignatureComplete} signatureRequestId={currentSignature.id} />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign Document: {currentSignature.documentName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SignatureRequestList
+              requests={[currentSignature]}
+            />
+            <Button onClick={() => handleSignatureComplete(currentSignature.id)}>
+              Sign Document
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <ul>
-          {pendingSignatures.map((signature) => (
-            <li key={signature.id}>
-              <span>{signature.documentName}</span>
-              <button onClick={() => handleSign(signature)}>Sign</button>
-            </li>
-          ))}
-        </ul>
+        <Card>
+          <CardHeader>
+            <CardTitle>Documents Awaiting Your Signature</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingSignatures.length > 0 ? (
+              <>
+                <SignatureRequestList
+                  requests={pendingSignatures}
+                />
+                <ul className="mt-4 space-y-2">
+                  {pendingSignatures.map(signature => (
+                    <li key={signature.id}>
+                      <Button onClick={() => handleSign(signature)}>
+                        Sign {signature.documentName}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p>No pending signatures at the moment.</p>
+            )}
+          </CardContent>
+        </Card>
       )}
     </motion.div>
   )
