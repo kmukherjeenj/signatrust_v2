@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
             <SocialLink href="#" label="Facebook" />
           </div>
           <div className="text-gray-400 text-sm">
-            <p>Contact us: info@signatrust.com | 1-800-SIGNATRUST</p>
+            <p>Contact us: info@signatrust.io | 1-800-SIGNATRUST</p>
           </div>
         </div>
         <div className="mt-8 text-center text-gray-400 text-sm">
