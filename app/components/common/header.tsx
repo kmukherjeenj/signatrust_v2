@@ -35,6 +35,7 @@ const Header: React.FC = () => {
             <NavLink href="/">Home</NavLink>
             <NavLink href="/dashboard">Dashboard</NavLink>
             <NavLink href="/login">Login</NavLink>
+            <NavLink href="/Documentation">Documentation</NavLink>
             <NavLink href="/register" className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-full inline-block mt-2">
               Register
             </NavLink>
