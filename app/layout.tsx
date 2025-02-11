@@ -1,4 +1,3 @@
-// C:\Source\signatrust\app\layout.tsx
 'use client';
 
 import React, { useEffect } from 'react';
@@ -10,15 +9,15 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const inter = Inter({ subsets: ['latin'] });
 
-/*export const metadata: Metadata = {
+/*const metadata: Metadata = {
   title: 'SignaTrust - Secure Digital Signatures with Blockchain & zkProofs',
   description: 'Experience the most secure and scalable digital signature solution on the market',
-  keywords: ['verasmo', 'digital signature', 'blockchain', 'zkProofs'],
+  keywords: ['solana', 'digital signature', 'blockchain', 'zkProofs', 'secure', 'scalable', 'decentralized', 'identity mobility'],
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
-}; */
+};*/
 
 function RootLayout({
   children,

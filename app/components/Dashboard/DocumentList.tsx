@@ -7,7 +7,7 @@ import { Document } from '../../shared/types';
 interface DocumentListProps {
   documents: Document[];
   onSign: (documentId: string) => void;
-  onSendForSignature: (documentId: string) => void;
+  onSendForSignature: (documentId: string, signers: string[]) => void;
 }
 
 const DocumentList: React.FC<DocumentListProps> = ({ documents, onSign, onSendForSignature }) => {
@@ -18,7 +18,12 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onSign, onSendFo
           <span>{doc.name}</span>
           <div>
             <Button onClick={() => onSign(doc.id)} className="mr-2">Sign</Button>
-            <Button onClick={() => onSendForSignature(doc.id)}>Send for Signature</Button>
+            <Button onClick={() => {
+              const signers = prompt('Enter signer emails (comma-separated):');
+              if (signers) {
+                onSendForSignature(doc.id, signers.split(',').map(s => s.trim()));
+              }
+            }}>Send for Signature</Button>
           </div>
         </li>
       ))}

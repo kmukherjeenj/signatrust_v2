@@ -1,15 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { uploadDocument, createSignatureRequest, getPendingSignatures, getDocumentStatus } from '../../lib/api';
+import { uploadDocument } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Document } from '../../shared/types';
 import { Upload, Send, Clock, FileCheck } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface QuickActionsProps {
-  onUpload: () => void;
+  onUpload: (newDocument: Document) => void;
   onSend: (documentId: string, signers: string[]) => void;
   onViewPending: () => void;
   onCheckStatus: () => void;
-  onDocumentUploaded: (newDocument: Document) => void;
 }
 
 export const QuickActions: React.FC<QuickActionsProps> = ({
@@ -17,7 +18,6 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   onSend,
   onViewPending,
   onCheckStatus,
-  onDocumentUploaded
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [storageProvider, setStorageProvider] = useState('cloud');
@@ -41,7 +41,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       formData.append('file', file);
       formData.append('storageProvider', storageProvider);
       const result = await uploadDocument(formData);
-      onDocumentUploaded(result);
+      onUpload(result);
       alert('Document uploaded successfully!');
       setFile(null);
       if (fileInputRef.current) {
@@ -53,7 +53,6 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
     } finally {
       setIsUploading(false);
     }
-    onUpload();
   };
 
   const handleSendForSignature = () => {
@@ -65,24 +64,28 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-8">
       <div>
-        <input
+        <Input
           type="file"
           onChange={handleFileChange}
           className="hidden"
           ref={fileInputRef}
         />
-        <select
+        <Select
           value={storageProvider}
-          onChange={(e) => setStorageProvider(e.target.value)}
-          className="mb-2 w-full p-2 bg-gray-700 text-white rounded"
+          onValueChange={setStorageProvider}
         >
-          <option value="cloud">Cloud Storage</option>
-          <option value="google">Google Drive</option>
-          <option value="azure">Azure Cloud Drive</option>
-          <option value="aws">AWS S3 Bucket</option>
-        </select>
+          <SelectTrigger className="mb-2 w-full">
+            <SelectValue placeholder="Select storage provider" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cloud">Cloud Storage</SelectItem>
+            <SelectItem value="google">Google Drive</SelectItem>
+            <SelectItem value="azure">Azure Cloud Drive</SelectItem>
+            <SelectItem value="aws">AWS S3 Bucket</SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           onClick={() => fileInputRef.current?.click()}
           className="w-full flex justify-center items-center"
@@ -116,3 +119,5 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
     </div>
   );
 };
+
+export default QuickActions;

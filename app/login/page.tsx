@@ -7,10 +7,26 @@ import { log, logError } from '../utils/client_logger';
 import api from '../lib/api';
 import axios from 'axios';
 import * as snarkjs from 'snarkjs';
+import { deriveDidFromPublicSignals } from '../utils/didUtils';
+//import * as borsh from 'borsh';
 
 function stringToBigInt(str: string): string {
   return BigInt('0x' + Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')).toString();
 }
+/*class ProofCommitment {
+  constructor(public merkle_root: Uint8Array, public timestamp: number) {}
+}
+
+// Define the schema for Borsh serialization
+const ProofCommitmentSchema = new Map([
+  [ProofCommitment, { 
+    kind: 'struct', 
+    fields: [
+      ['merkle_root', [32]],
+      ['timestamp', 'i64']
+    ]
+  }]
+]);*/
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
@@ -59,6 +75,14 @@ const LoginPage: React.FC = () => {
         message: stringToBigInt(challenge) // or another appropriate value
       };
 
+      // Create a ProofCommitment
+      //const merkle_root = new Uint8Array(32).fill(0); // Placeholder, replace with actual computation
+      //const timestamp = Math.floor(Date.now() / 1000); // Use seconds since epoch for i64
+      //const commitment = new ProofCommitment(merkle_root, timestamp);
+
+      // Serialize the commitment using Borsh
+      //const serializedCommitment = borsh.serialize(ProofCommitmentSchema, commitment);
+
       console.log('Generating proof with input:', input);
   
       const { proof, publicSignals } = await snarkjs.groth16.fullProve(
@@ -94,26 +118,43 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-    // Generate a challenge (this should ideally come from the backend)
+     // Generate a challenge (this should ideally come from the backend)
       const challenge = generateChallenge();
 
-    // Generate proof (this is a placeholder - you need to implement the actual proof generation)
+     // Derive the DID from the public signals
       const { proof, publicSignals } = await generateProof(did, challenge );
 
-      log('info', 'Sending login request to backend', { did, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
+     // Derive the DID from the public signals
+      const derivedDID = deriveDidFromPublicSignals(publicSignals);
+
+      //log('info', 'Sending login request to backend', { did, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
       //const response = await api.post('/identity/login', { did }, { withCredentials: true });
-      const response = await api.post('/identity/login', { did, proof, publicSignals }, { withCredentials: true });
+      //const response = await api.post('/identity/login', { did, proof, publicSignals }, { withCredentials: true });
+   
+
+      log('info', 'Sending login request to backend', { derivedDID, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
       
+      //const response = await api.post('/identity/login', { did: derivedDID, proof, publicSignals }, { withCredentials: true });
+
+      const response = await api.post('/identity/login', { 
+        did: derivedDID, 
+        proof, 
+        publicSignals
+        //instruction: 'VerifyProof',
+        //proof_hash: proof.pi_a[0] // Using the first element of pi_a as a simple proof hash
+      }, { withCredentials: true });
+
       if (response.data && response.data.identity && response.data.identity.did) {
         const matchingIdentifier = response.data.identity;
         // Store the authentication data
         localStorage.setItem('zkProof', JSON.stringify(proof));
         localStorage.setItem('publicSignals', JSON.stringify(publicSignals));
         localStorage.setItem('challenge', challenge);
-        log('info', 'Logged in successfully', { did: matchingIdentifier.did });
+        // Store the derived DID in sessionStorage
+        sessionStorage.setItem('userDID', derivedDID);
+        log('info', 'Logged in successfully', { did: derivedDID });
         setIsLoading(false);
-        //router.push(`/dashboard`);
-        router.push(`/dashboard?did=${encodeURIComponent(matchingIdentifier.did)}`);
+        router.push(`/dashboard?did=${encodeURIComponent(derivedDID)}`);
       } else {
         throw new Error('Login successful but DID not returned');
       }

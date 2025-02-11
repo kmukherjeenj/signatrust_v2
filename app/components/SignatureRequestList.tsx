@@ -5,9 +5,10 @@ import { SignatureRequest } from '../shared/types';
 
 interface SignatureRequestListProps {
   requests: SignatureRequest[];
+  onSign?: (documentId: string) => Promise<void>;
 }
 
-const SignatureRequestList: React.FC<SignatureRequestListProps> = ({ requests }) => {
+const SignatureRequestList: React.FC<SignatureRequestListProps> = ({ requests, onSign }) => {
   return (
     <ul className="space-y-4">
       {requests.map((request) => (

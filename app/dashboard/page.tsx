@@ -1,4 +1,3 @@
-// File: app/dashboard/page.tsx
 
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
