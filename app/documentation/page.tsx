@@ -7,8 +7,8 @@ export default function DocumentationPage() {
       </h1>
       <p className="text-lg text-gray-700">Version 1.0</p>
       <p className="mt-2 text-gray-800">
-        This API enables seamless integration of SignaTrust's digital signing
-        solutions into any platform.
+        This API enables seamless integration of SignaTrust&apos;s digital
+        signing solutions into any platform.
       </p>
 
       {/* Base URL Section */}
@@ -54,51 +54,19 @@ Content-Type: application/json`}
           </pre>
         </div>
 
-        {/* Register New Account */}
+        {/* Link Account */}
         <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
-          <h3 className="text-lg font-semibold">1.2 Register New Account</h3>
-          <p>Create a new SignaTrust account.</p>
+          <h3 className="text-lg font-semibold">1.2 Link Account</h3>
+          <p>Links a SignaTrust account to an external platform user.</p>
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
-            <code>POST /auth/register</code>
+            <code>POST /users/link</code>
           </pre>
-          <p className="font-semibold mt-2">Request Body:</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`{
-  "email": "user@example.com",
-  "password": "SecurePass123!",
-  "first_name": "John",
-  "last_name": "Doe"
-}`}
-            </code>
-          </pre>
-          <p className="font-semibold mt-2">Response:</p>
+          <p className="font-semibold mt-2">Request:</p>
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
             <code>
               {`{
   "user_id": "12345",
-  "status": "created"
-}`}
-            </code>
-          </pre>
-        </div>
-
-        {/* Update Account Information */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
-          <h3 className="text-lg font-semibold">
-            1.3 Update Account Information
-          </h3>
-          <p>Modify user account details.</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
-            <code>PUT /users/{`{user_id}`}</code>
-          </pre>
-          <p className="font-semibold mt-2">Request Body:</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`{
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone": "+1234567890"
+  "external_platform_id": "PLATFORM-98765"
 }`}
             </code>
           </pre>
@@ -106,34 +74,67 @@ Content-Type: application/json`}
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
             <code>
               {`{
-  "status": "updated",
-  "updated_at": "2025-02-10T12:00:00Z"
-}`}
-            </code>
-          </pre>
-        </div>
-
-        {/* Delete Account */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
-          <h3 className="text-lg font-semibold">1.4 Delete Account</h3>
-          <p>Delete a user account permanently.</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
-            <code>DELETE /users/{`{user_id}`}</code>
-          </pre>
-          <p className="font-semibold mt-2">Response:</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`{
-  "status": "deleted",
-  "deleted_at": "2025-02-10T12:05:00Z"
+  "status": "linked",
+  "linked_at": "2025-02-08T10:30:00Z"
 }`}
             </code>
           </pre>
         </div>
       </section>
 
-      {/* Additional Sections */}
-      {/* Signature Requests, Documents, Webhooks, & More Would Follow... */}
+      {/* Signature Requests */}
+      <section className="mt-8">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          2. Signature Requests
+        </h2>
+        <p className="text-gray-700">Manage document signing workflows.</p>
+
+        {/* Send Signature Request */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+          <h3 className="text-lg font-semibold">2.1 Send Signature Request</h3>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
+            <code>POST /signatures</code>
+          </pre>
+          <p className="font-semibold mt-2">Request:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "signer_email": "user@example.com",
+  "document_url": "https://example.com/docs/contract.pdf",
+  "redirect_url": "https://example.com/confirmation"
+}`}
+            </code>
+          </pre>
+          <p className="font-semibold mt-2">Response:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "request_id": "SIGN-001",
+  "signing_url": "https://signatrust.com/sign/SIGN-001"
+}`}
+            </code>
+          </pre>
+        </div>
+
+        {/* Get Signature Status */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+          <h3 className="text-lg font-semibold">2.2 Get Signature Status</h3>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
+            <code>GET /signatures/{`{request_id}`}</code>
+          </pre>
+          <p className="font-semibold mt-2">Response:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "request_id": "SIGN-001",
+  "status": "pending",
+  "signer_email": "user@example.com",
+  "signed_at": null
+}`}
+            </code>
+          </pre>
+        </div>
+      </section>
     </main>
   );
 }
