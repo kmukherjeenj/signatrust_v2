@@ -5,10 +5,10 @@ export default function DocumentationPage() {
       <h1 className="text-4xl font-bold text-gray-900 mb-4">
         SignaTrust API Documentation
       </h1>
-      <p className="text-lg text-gray-700">v1.0</p>
+      <p className="text-lg text-gray-700">Version 1.0</p>
       <p className="mt-2 text-gray-800">
-        Learn how to integrate <strong>SignaTrust</strong> into your platform
-        with easy-to-follow tutorials and examples.
+        This API enables seamless integration of SignaTrust's digital signing
+        solutions into any platform.
       </p>
 
       {/* Base URL Section */}
@@ -19,24 +19,22 @@ export default function DocumentationPage() {
         </pre>
       </div>
 
-      {/* Authentication Tutorial */}
+      {/* Authentication & User Management */}
       <section className="mt-8">
         <h2 className="text-2xl font-semibold text-gray-900">
-          1. Authentication Tutorial
+          1. Authentication & Account Management
         </h2>
         <p className="text-gray-700">
-          Before making API calls, authenticate using your API key.
+          Manage user authentication, account linking, and permissions.
         </p>
 
-        {/* Example: Authenticate User */}
+        {/* Authenticate User */}
         <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
           <h3 className="text-lg font-semibold">1.1 Authenticate User</h3>
-          <p>Use the following request to log in:</p>
-
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+          <p>Authenticate via API key or OAuth.</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
             <code>POST /auth/login</code>
           </pre>
-
           <p className="font-semibold mt-2">Headers:</p>
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
             <code>
@@ -44,118 +42,98 @@ export default function DocumentationPage() {
 Content-Type: application/json`}
             </code>
           </pre>
-
-          <p className="font-semibold mt-2">Example Request (cURL):</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`curl -X POST https://api.signatrust.io/v1/auth/login \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json"`}
-            </code>
-          </pre>
-
-          <p className="font-semibold mt-2">Example in JavaScript (fetch):</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`fetch("https://api.signatrust.io/v1/auth/login", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer YOUR_API_KEY",
-    "Content-Type": "application/json"
-  }
-}).then(response => response.json())
-  .then(data => console.log(data));`}
-            </code>
-          </pre>
-        </div>
-      </section>
-
-      {/* Signature Requests Tutorial */}
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          2. Sending a Signature Request
-        </h2>
-        <p className="text-gray-700">
-          Learn how to send a document for signing.
-        </p>
-
-        {/* Example: Send Signature Request */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
-          <h3 className="text-lg font-semibold">2.1 Send Signature Request</h3>
-          <p>Use this API to request a signature from a user.</p>
-
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>POST /signatures</code>
-          </pre>
-
-          <p className="font-semibold mt-2">Example Request:</p>
+          <p className="font-semibold mt-2">Response:</p>
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
             <code>
               {`{
-  "signer_email": "user@example.com",
-  "document_url": "https://yourplatform.com/docs/contract.pdf",
-  "redirect_url": "https://yourplatform.com/confirmation"
+  "user_id": "12345",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI...",
+  "expires_in": 3600
 }`}
             </code>
           </pre>
-
-          <p className="font-semibold mt-2">Example in Node.js:</p>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>
-              {`const fetch = require("node-fetch");
-
-const sendSignatureRequest = async () => {
-  const response = await fetch("https://api.signatrust.io/v1/signatures", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer YOUR_API_KEY",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      signer_email: "user@example.com",
-      document_url: "https://yourplatform.com/docs/contract.pdf",
-      redirect_url: "https://yourplatform.com/confirmation"
-    })
-  });
-
-  const data = await response.json();
-  console.log(data);
-};
-
-sendSignatureRequest();`}
-            </code>
-          </pre>
         </div>
-      </section>
 
-      {/* Checking Signature Status */}
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          3. Checking Signature Status
-        </h2>
-        <p className="text-gray-700">
-          Retrieve the current status of a signature request.
-        </p>
-
+        {/* Register New Account */}
         <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
-          <h3 className="text-lg font-semibold">3.1 Get Signature Status</h3>
-          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
-            <code>GET /signatures/{`{request_id}`}</code>
+          <h3 className="text-lg font-semibold">1.2 Register New Account</h3>
+          <p>Create a new SignaTrust account.</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
+            <code>POST /auth/register</code>
           </pre>
-
-          <p className="font-semibold mt-2">Example Response:</p>
+          <p className="font-semibold mt-2">Request Body:</p>
           <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
             <code>
               {`{
-  "request_id": "SIGN-001",
-  "status": "pending",
-  "signer_email": "user@example.com",
-  "signed_at": null
+  "email": "user@example.com",
+  "password": "SecurePass123!",
+  "first_name": "John",
+  "last_name": "Doe"
+}`}
+            </code>
+          </pre>
+          <p className="font-semibold mt-2">Response:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "user_id": "12345",
+  "status": "created"
+}`}
+            </code>
+          </pre>
+        </div>
+
+        {/* Update Account Information */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+          <h3 className="text-lg font-semibold">
+            1.3 Update Account Information
+          </h3>
+          <p>Modify user account details.</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
+            <code>PUT /users/{`{user_id}`}</code>
+          </pre>
+          <p className="font-semibold mt-2">Request Body:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone": "+1234567890"
+}`}
+            </code>
+          </pre>
+          <p className="font-semibold mt-2">Response:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "status": "updated",
+  "updated_at": "2025-02-10T12:00:00Z"
+}`}
+            </code>
+          </pre>
+        </div>
+
+        {/* Delete Account */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+          <h3 className="text-lg font-semibold">1.4 Delete Account</h3>
+          <p>Delete a user account permanently.</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400 mt-2">
+            <code>DELETE /users/{`{user_id}`}</code>
+          </pre>
+          <p className="font-semibold mt-2">Response:</p>
+          <pre className="bg-gray-50 text-gray-900 p-3 rounded-lg border border-gray-400">
+            <code>
+              {`{
+  "status": "deleted",
+  "deleted_at": "2025-02-10T12:05:00Z"
 }`}
             </code>
           </pre>
         </div>
       </section>
+
+      {/* Additional Sections */}
+      {/* Signature Requests, Documents, Webhooks, & More Would Follow... */}
     </main>
   );
 }
