@@ -17,7 +17,8 @@ const Header: React.FC = () => {
           </Link>
           <div className="hidden md:flex items-center space-x-6">
             <NavLink href="/">Home</NavLink>
-            <NavLink href="/documentation">Documentation</NavLink>
+            <NavLink href="/documentation">API</NavLink>
+            <NavLink href="/guides">Guides</NavLink>
             <NavLink href="/dashboard">Dashboard</NavLink>
             <NavLink href="/login">Login</NavLink>
             <NavLink
@@ -37,7 +38,8 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4">
             <NavLink href="/">Home</NavLink>
-            <NavLink href="/documentation">Documentation</NavLink>
+            <NavLink href="/documentation">API</NavLink>
+            <NavLink href="/guides">Guides</NavLink>
             <NavLink href="/dashboard">Dashboard</NavLink>
             <NavLink href="/login">Login</NavLink>
             <NavLink
