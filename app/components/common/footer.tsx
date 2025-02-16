@@ -1,6 +1,7 @@
-import React from 'react';
-import Logo from '../../components/Logo';
-import Link from 'next/link';
+import React from "react";
+import Logo from "../../components/Logo";
+import Link from "next/link";
+import { Linkedin, Facebook, X } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
@@ -12,25 +13,43 @@ const Footer: React.FC = () => {
             <span className="text-xl font-bold">SignaTrust</span>
           </div>
           <div className="flex space-x-4 mb-4 md:mb-0">
-            <SocialLink href="#" label="LinkedIn" />
-            <SocialLink href="#" label="Twitter" />
-            <SocialLink href="#" label="Facebook" />
+            <SocialLink
+              href="#"
+              label="LinkedIn"
+              icon={<Linkedin size={20} />}
+            />
+            <SocialLink href="#" label="X" icon={<X size={20} />} />
+            <SocialLink
+              href="#"
+              label="Facebook"
+              icon={<Facebook size={20} />}
+            />
           </div>
           <div className="text-gray-400 text-sm">
             <p>Contact us: info@signatrust.io | 1-800-SIGNATRUST</p>
           </div>
         </div>
         <div className="mt-8 text-center text-gray-400 text-sm">
-          <p>&copy; {new Date().getFullYear()} SignaTrust. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} SignaTrust. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-const SocialLink: React.FC<{ href: string; label: string }> = ({ href, label }) => (
-  <Link href={href} className="text-gray-400 hover:text-purple-500 transition duration-300">
-    {label}
+const SocialLink: React.FC<{
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+}> = ({ href, label, icon }) => (
+  <Link
+    href={href}
+    className="text-gray-400 hover:text-purple-500 transition duration-300 flex items-center space-x-2"
+  >
+    {icon}
+    <span>{label}</span>
   </Link>
 );
 
