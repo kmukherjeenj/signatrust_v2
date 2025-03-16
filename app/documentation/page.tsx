@@ -1,4 +1,6 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
+
 import Head from "next/head";
 import Link from "next/link";
 
