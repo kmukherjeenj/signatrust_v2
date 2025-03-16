@@ -33,7 +33,6 @@ export default function Page() {
           <a href="#">Home</a>
           <a href="#">API</a>
           <a href="#">Guides</a>
-          <a href="#">Dashboard</a>
           <a href="#">Login</a>
           <a href="#" className="btn-register">
             Register
