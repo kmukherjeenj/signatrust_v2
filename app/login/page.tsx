@@ -1,205 +1,111 @@
-﻿'use client';
+﻿// app/login/page.tsx
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { log, logError } from '../utils/client_logger';
-import api from '../lib/api';
-import axios from 'axios';
-import * as snarkjs from 'snarkjs';
-import { deriveDidFromPublicSignals } from '../utils/didUtils';
-//import * as borsh from 'borsh';
-
-function stringToBigInt(str: string): string {
-  return BigInt('0x' + Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('')).toString();
-}
-/*class ProofCommitment {
-  constructor(public merkle_root: Uint8Array, public timestamp: number) {}
-}
-
-// Define the schema for Borsh serialization
-const ProofCommitmentSchema = new Map([
-  [ProofCommitment, { 
-    kind: 'struct', 
-    fields: [
-      ['merkle_root', [32]],
-      ['timestamp', 'i64']
-    ]
-  }]
-]);*/
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  loginWithCredentials,
+  loginWithDID,
+  loginWithWallet,
+} from "../lib/auth";
+import { log, logError } from "../utils/client_logger";
+import { generateChallenge } from "../utils/didUtils";
+import { FEATURES } from "../config";
 
 const LoginPage: React.FC = () => {
-  const router = useRouter();
-  const [did, setDid] = useState('');
-  const [error, setError] = useState('');
+  const [loginMethod, setLoginMethod] = useState<
+    "credentials" | "did" | "wallet"
+  >("credentials");
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: "",
+  });
+  const [did, setDid] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollContainer = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    log('info', 'Login component mounted');
-    return () => log('info', 'Login component unmounted');
+    log("info", "Login component mounted");
+    return () => log("info", "Login component unmounted");
   }, []);
 
-  const isDIDValid = (did: string) => {
-    // Basic DID validation logic
-    return /^did:[\w:]+$/.test(did);
+  const handleCredentialChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
-  async function generateProof(did: string, challenge: string) {
+  const handleDIDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDid(e.target.value);
+  };
+
+  const handleCredentialLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+    log("info", "Credential login attempt", { username: credentials.username });
 
     try {
-      // Assuming these files are served from your backend or a CDN
-      //const wasmPath = '/circuits/auth.wasm';
-      //const zkeyPath = '/circuits/auth.zkey';
-      const wasmPath = 'http://localhost:3000/circuits/auth.wasm';
-      const zkeyPath = 'http://localhost:3000/circuits/auth.zkey';
-  
-      console.log('Fetching WASM from:', wasmPath);
-      const wasmResponse = await fetch(wasmPath);
-      if (!wasmResponse.ok) {
-        console.error('WASM fetch failed:', wasmResponse.status, wasmResponse.statusText);
-        const text = await wasmResponse.text();
-        console.error('Response text:', text);
-        throw new Error(`Failed to fetch WASM: ${wasmResponse.status} ${wasmResponse.statusText}`);
-      }
-      const wasmBuffer = await wasmResponse.arrayBuffer();
-      console.log('WASM fetched successfully');
-      /*const input = {
-        did: BigInt('0x' + Buffer.from(did).toString('hex')).toString(),
-        challenge: BigInt('0x' + Buffer.from(challenge).toString('hex')).toString()
-      };*/
-  
-      const input = {
-        pubKey: stringToBigInt(did),
-        signature: stringToBigInt(challenge),
-        message: stringToBigInt(challenge) // or another appropriate value
-      };
-
-      // Create a ProofCommitment
-      //const merkle_root = new Uint8Array(32).fill(0); // Placeholder, replace with actual computation
-      //const timestamp = Math.floor(Date.now() / 1000); // Use seconds since epoch for i64
-      //const commitment = new ProofCommitment(merkle_root, timestamp);
-
-      // Serialize the commitment using Borsh
-      //const serializedCommitment = borsh.serialize(ProofCommitmentSchema, commitment);
-
-      console.log('Generating proof with input:', input);
-  
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        input,
-        wasmPath,
-        zkeyPath
-      );
-  
-      console.log('Proof generated successfully');
-      return { proof, publicSignals };
-    } catch (error) {
-      console.error('Error generating proof:', error);
-      throw new Error('Failed to generate proof');
+      const response = await loginWithCredentials(credentials);
+      log("info", "Login successful", { username: credentials.username });
+      router.push("/dashboard");
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logError(error, "Login failed");
+      setError("Invalid credentials. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  }
-
-  const generateChallenge = (): string => {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleDIDLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
-    log('info', 'Login attempt', { did });
+    log("info", "DID login attempt", { did });
 
-    if (!did.trim() || !isDIDValid(did)){
+    if (!did.trim() || !isDIDValid(did)) {
       setError("Invalid DID format. Please enter a valid DID.");
       setIsLoading(false);
       return;
     }
 
     try {
-     // Generate a challenge (this should ideally come from the backend)
-      const challenge = generateChallenge();
-
-     // Derive the DID from the public signals
-      const { proof, publicSignals } = await generateProof(did, challenge );
-
-     // Derive the DID from the public signals
-      const derivedDID = deriveDidFromPublicSignals(publicSignals);
-
-      //log('info', 'Sending login request to backend', { did, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
-      //const response = await api.post('/identity/login', { did }, { withCredentials: true });
-      //const response = await api.post('/identity/login', { did, proof, publicSignals }, { withCredentials: true });
-   
-
-      log('info', 'Sending login request to backend', { derivedDID, proofGenerated: !!proof, publicSignalsGenerated: !!publicSignals });
-      
-      //const response = await api.post('/identity/login', { did: derivedDID, proof, publicSignals }, { withCredentials: true });
-
-      const response = await api.post('/identity/login', { 
-        did: derivedDID, 
-        proof, 
-        publicSignals
-        //instruction: 'VerifyProof',
-        //proof_hash: proof.pi_a[0] // Using the first element of pi_a as a simple proof hash
-      }, { withCredentials: true });
-
-      if (response.data && response.data.identity && response.data.identity.did) {
-        const matchingIdentifier = response.data.identity;
-        // Store the authentication data
-        localStorage.setItem('zkProof', JSON.stringify(proof));
-        localStorage.setItem('publicSignals', JSON.stringify(publicSignals));
-        localStorage.setItem('challenge', challenge);
-        // Store the derived DID in sessionStorage
-        sessionStorage.setItem('userDID', derivedDID);
-        log('info', 'Logged in successfully', { did: derivedDID });
-        setIsLoading(false);
-        router.push(`/dashboard?did=${encodeURIComponent(derivedDID)}`);
-      } else {
-        throw new Error('Login successful but DID not returned');
-      }
+      const response = await loginWithDID(did);
+      log("info", "DID login successful", { did });
+      router.push("/dashboard");
     } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logError(error, "DID login failed");
+      setError("Authentication failed. Please check your DID and try again.");
+    } finally {
       setIsLoading(false);
-      if (axios.isAxiosError(err)) {
-        switch (err.response?.status) {
-          case 400:
-            setError("Invalid request. Please check your input and try again.");
-            break;
-          case 401:
-            setError("Authentication failed. Please check your DID and try again.");
-            break;
-          case 404:
-            setError("Digital ID not found. Please check and try again or register if you're a new user.");
-            break;
-          case 429:
-            setError("Too many login attempts. Please try again later.");
-            break;
-          case 500:
-            setError("Server error. Please try again later or contact support.");
-            break;
-          default:
-            setError(`An error occurred during login. Please try again. ${err.response?.data?.error || err.message}`);
-        }
-        logError(err, `Login error - DID: ${did}, Status: ${err.response?.status}, Response: ${JSON.stringify(err.response?.data)}`);
-      } else if (err instanceof Error) {
-        if (err.message === 'Login successful but DID not returned') {
-          setError("Login was successful, but there was an issue retrieving your account details. Please try again.");
-        } else {
-          setError("An unexpected error occurred. Please try again later.");
-        }
-        logError(err, `Unexpected login error - DID: ${did}`);
-      } else {
-        setError("An unknown error occurred. Please try again later.");
-        logError(new Error(String(err)), `Unknown login error - DID: ${did}`);
-      }
     }
   };
 
-  const scroll = (scrollOffset: number) => {
-    if (scrollContainer.current) {
-      scrollContainer.current.scrollLeft += scrollOffset;
-      log('info', 'Info cards scrolled', { scrollOffset });
+  const handleWalletLogin = async () => {
+    setError("");
+    setIsLoading(true);
+    log("info", "Wallet login attempt");
+
+    try {
+      const response = await loginWithWallet();
+      log("info", "Wallet login successful");
+      router.push("/dashboard");
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logError(error, "Wallet login failed");
+      setError(
+        error.message || "Wallet authentication failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const isDIDValid = (did: string) => {
+    return /^did:[\w:]+$/.test(did);
   };
 
   return (
@@ -209,47 +115,190 @@ const LoginPage: React.FC = () => {
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
-          Or{' '}
-          <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+          Or{" "}
+          <Link
+            href="/register"
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
             register a new account
           </Link>
         </p>
       </div>
+
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="did" className="block text-sm font-medium text-gray-300">
-                Digital ID
-              </label>
-              <div className="mt-1">
-                <input
-                  id="did"
-                  name="did"
-                  type="text"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={did}
-                  onChange={(e) => setDid(e.target.value)}
-                  placeholder="Enter your Digital ID"
-                />
-              </div>
-            </div>
-            {error && (
-              <div className="text-red-500 text-sm mt-2">
-                {error}
-              </div>
-            )}
-            <div>
+          <div className="flex justify-center space-x-2 mb-6">
+            <button
+              className={`px-3 py-2 rounded-md ${
+                loginMethod === "credentials"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-700 text-gray-300"
+              }`}
+              onClick={() => setLoginMethod("credentials")}
+            >
+              Email & Password
+            </button>
+            <button
+              className={`px-3 py-2 rounded-md ${
+                loginMethod === "did"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-700 text-gray-300"
+              }`}
+              onClick={() => setLoginMethod("did")}
+            >
+              Digital ID
+            </button>
+            {FEATURES.ENABLE_WALLET_AUTH && (
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className={`px-3 py-2 rounded-md ${
+                  loginMethod === "wallet"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-700 text-gray-300"
+                }`}
+                onClick={() => setLoginMethod("wallet")}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                Wallet
               </button>
+            )}
+          </div>
+
+          {error && (
+            <div className="bg-red-900/30 border border-red-500 text-red-200 px-4 py-2 rounded-md mb-4">
+              {error}
             </div>
-          </form>
+          )}
+
+          {loginMethod === "credentials" && (
+            <form className="space-y-6" onSubmit={handleCredentialLogin}>
+              <div>
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Email or Username
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    value={credentials.username}
+                    onChange={handleCredentialChange}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    value={credentials.password}
+                    onChange={handleCredentialChange}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-600 rounded bg-gray-700"
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    className="ml-2 block text-sm text-gray-300"
+                  >
+                    Remember me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <a
+                    href="#"
+                    className="font-medium text-indigo-500 hover:text-indigo-400"
+                  >
+                    Forgot your password?
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {loginMethod === "did" && (
+            <form className="space-y-6" onSubmit={handleDIDLogin}>
+              <div>
+                <label
+                  htmlFor="did"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Digital ID (DID)
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="did"
+                    name="did"
+                    type="text"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    value={did}
+                    onChange={handleDIDChange}
+                    placeholder="did:sol:..."
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                  {isLoading ? "Authenticating..." : "Sign in with DID"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {loginMethod === "wallet" && (
+            <div className="space-y-6">
+              <div className="bg-gray-700 p-4 rounded-md text-center">
+                <p className="text-gray-300 mb-4">
+                  Connect your blockchain wallet to sign in securely.
+                </p>
+                <button
+                  onClick={handleWalletLogin}
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                  {isLoading ? "Connecting..." : "Connect Wallet"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-progress": "^1.1.6",
     "@radix-ui/react-slot": "^1.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/crypto-js": "^4.2.2",
@@ -45,6 +47,7 @@
     "sqlite3": "^5.1.7",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "tweetnacl": "^1.0.3",
     "web-did-resolver": "^2.0.27",
     "zod": "^3.23.8",
     "zustand": "^4.5.4"
