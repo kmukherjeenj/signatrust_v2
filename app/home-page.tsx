@@ -6,13 +6,13 @@ import dynamic from "next/dynamic";
 
 // Import components
 import Header from "./components/common/header";
-import Hero from "./components/Hero";
-import Features from "./components/Features";
-import HowItWorks from "./components/HowItWorks";
+import Hero from "./components/hero";
+import Features from "./components/features";
+import HowItWorks from "./components/howItWorks";
 import SecuritySection from "./components/securitySection";
 import UseCases from "./components/useCases";
 import Testimonials from "./components/testimonials";
-import Pricing from "./components/Pricing";
+import Pricing from "./components/pricing";
 import CTASection from "./components/ctaSection";
 import Footer from "./components/common/footer";
 
