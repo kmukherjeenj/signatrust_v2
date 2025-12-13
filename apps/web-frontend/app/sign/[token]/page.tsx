@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, use } from 'react';
+import { toast } from 'sonner';
+import { Button, Spinner } from '@/components/ui';
 
 type SessionData = {
   id: string;
@@ -189,8 +191,11 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
       setSigned(true);
       setAllSigned(data.allSigned || false);
       setShowSignModal(false);
+      toast.success('Signature submitted successfully!');
     } catch (e: any) {
-      setError(e.message || 'Failed to submit signature');
+      const errorMsg = e.message || 'Failed to submit signature';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -394,13 +399,12 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
                session?.canSign === false ? 'Waiting for previous signer(s)' :
                'Ready to sign'}
             </div>
-            <button
+            <Button
               onClick={() => setShowSignModal(true)}
               disabled={!pdfReady || session?.canSign === false}
-              className="inline-flex items-center rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-medium text-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {session?.canSign === false ? 'Waiting...' : 'Sign Document'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -430,27 +434,29 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <button
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+              <Button
+                variant="ghost"
                 onClick={clearSignature}
-                className="text-sm text-zinc-400 hover:text-white"
               >
                 Clear
-              </button>
-              <div className="flex gap-2">
-                <button
+              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="secondary"
                   onClick={() => setShowSignModal(false)}
-                  className="rounded-lg border border-white/10 px-4 py-2 text-sm"
+                  className="flex-1 sm:flex-initial"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={submitSignature}
-                  disabled={!hasSignature || submitting}
-                  className="rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
+                  disabled={!hasSignature}
+                  loading={submitting}
+                  className="flex-1 sm:flex-initial"
                 >
-                  {submitting ? 'Submitting...' : 'Submit Signature'}
-                </button>
+                  Submit Signature
+                </Button>
               </div>
             </div>
           </div>
@@ -509,10 +515,7 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
               >
                 {verifying ? (
                   <>
-                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <Spinner size="md" />
                     Verifying...
                   </>
                 ) : (
@@ -534,15 +537,15 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
             </div>
 
             <div className="flex justify-end">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setShowVerifyModal(false);
                   setVerificationResult(null);
                 }}
-                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>

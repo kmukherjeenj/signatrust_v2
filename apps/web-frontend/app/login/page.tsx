@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,12 +27,17 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Failed to send magic link. Please try again.');
+        const errorMsg = 'Failed to send magic link. Please try again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
       } else {
         setSent(true);
+        toast.success('Magic link sent! Check your email.');
       }
     } catch (err) {
-      setError('An unexpected error occurred.');
+      const errorMsg = 'An unexpected error occurred.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -103,13 +110,14 @@ export default function LoginPage() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={loading || !email}
-              className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 text-sm font-medium text-black disabled:opacity-50"
+              disabled={!email}
+              loading={loading}
+              className="w-full"
             >
-              {loading ? 'Sending...' : 'Send Magic Link'}
-            </button>
+              Send Magic Link
+            </Button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-white/10 text-center">

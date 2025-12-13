@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui';
 import { CancelSessionModal } from './CancelSessionModal';
 import { ResendInvitesModal } from './ResendInvitesModal';
 import { SetDeadlineModal } from './SetDeadlineModal';
@@ -55,9 +57,12 @@ export function SessionActions({
       });
       if (response.ok) {
         setIsSequential(!isSequential);
+        toast.success(`Sequential signing ${!isSequential ? 'enabled' : 'disabled'}`);
+      } else {
+        toast.error('Failed to update sequential signing');
       }
     } catch (error) {
-      console.error('Failed to toggle sequential signing:', error);
+      toast.error('Failed to update sequential signing');
     } finally {
       setTogglingSequential(false);
     }
@@ -68,70 +73,83 @@ export function SessionActions({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
-        {/* View Audit Log - always available */}
-        <button
-          onClick={() => setShowAuditLog(true)}
-          className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/5 transition-colors"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-          </svg>
-          Audit Log
-        </button>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+        {/* Primary actions row */}
+        <div className="flex flex-wrap gap-2">
+          {/* View Audit Log - always available */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAuditLog(true)}
+            aria-label="View audit log"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            <span className="hidden sm:inline">Audit Log</span>
+          </Button>
 
-        {/* Actions only for pending sessions */}
-        {isPending && (
-          <>
-            <button
-              onClick={() => setShowCancelModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Cancel
-            </button>
-
-            {pendingSignersCount > 0 && (
-              <button
-                onClick={() => setShowResendModal(true)}
-                className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded hover:bg-cyan-500/10 transition-colors"
+          {/* Actions only for pending sessions */}
+          {isPending && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCancelModal(true)}
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                aria-label="Cancel session"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Resend Invites
-              </button>
-            )}
+                <span className="hidden sm:inline">Cancel</span>
+              </Button>
 
-            <button
-              onClick={() => setShowDeadlineModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/5 transition-colors"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {expiresAt ? 'Edit Deadline' : 'Set Deadline'}
-            </button>
+              {pendingSignersCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowResendModal(true)}
+                  className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  aria-label="Resend invites"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="hidden sm:inline">Resend</span>
+                </Button>
+              )}
 
-            {/* Sequential Signing Toggle */}
-            <button
-              onClick={handleToggleSequential}
-              disabled={togglingSequential}
-              className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
-                isSequential
-                  ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
-                  : 'text-zinc-400 hover:text-zinc-300 hover:bg-white/5'
-              }`}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              {togglingSequential ? 'Updating...' : isSequential ? 'Sequential: ON' : 'Sequential: OFF'}
-            </button>
-          </>
-        )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeadlineModal(true)}
+                aria-label={expiresAt ? 'Edit deadline' : 'Set deadline'}
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="hidden sm:inline">{expiresAt ? 'Edit Deadline' : 'Set Deadline'}</span>
+              </Button>
+
+              {/* Sequential Signing Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToggleSequential}
+                loading={togglingSequential}
+                className={isSequential ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10' : ''}
+                aria-label={isSequential ? 'Disable sequential signing' : 'Enable sequential signing'}
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span className="hidden sm:inline">{isSequential ? 'Sequential: ON' : 'Sequential: OFF'}</span>
+                <span className="sm:hidden">{isSequential ? 'Seq' : 'Seq'}</span>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Modals */}

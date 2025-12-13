@@ -2,7 +2,9 @@
 
 import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 import Link from 'next/link';
+import { Button, Spinner } from '@/components/ui';
 
 type SignerInput = {
   phone: string;
@@ -177,8 +179,11 @@ export default function HomePage() {
 
       const data = await response.json();
       setCreatedSession(data);
+      toast.success('Signing session created!');
     } catch (e: any) {
-      setError(e.message || 'Failed to create signing session');
+      const errorMsg = e.message || 'Failed to create signing session';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setCreating(false);
     }
@@ -188,6 +193,7 @@ export default function HomePage() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedIndex(index);
+      toast.success('Copied to clipboard');
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch {
       const textarea = document.createElement('textarea');
@@ -197,6 +203,7 @@ export default function HomePage() {
       document.execCommand('copy');
       document.body.removeChild(textarea);
       setCopiedIndex(index);
+      toast.success('Copied to clipboard');
       setTimeout(() => setCopiedIndex(null), 2000);
     }
   };
@@ -380,10 +387,7 @@ export default function HomePage() {
                 >
                   {isHashing ? (
                     <>
-                      <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <Spinner size="md" />
                       Computing hash...
                     </>
                   ) : documentHash ? (
@@ -518,13 +522,15 @@ export default function HomePage() {
             </div>
 
             {/* Submit */}
-            <button
+            <Button
               onClick={createSession}
-              disabled={creating || isHashing}
-              className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 text-sm font-medium text-black disabled:opacity-50"
+              disabled={isHashing}
+              loading={creating}
+              size="lg"
+              className="w-full"
             >
-              {creating ? 'Creating Session...' : 'Create Signing Session'}
-            </button>
+              Create Signing Session
+            </Button>
           </div>
 
           <div className="mt-6 pt-6 border-t border-white/10">
