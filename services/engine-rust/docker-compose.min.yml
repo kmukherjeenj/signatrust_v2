@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: signatrust
+      POSTGRES_PASSWORD: signatrust
+      POSTGRES_DB: signatrust
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  engine-rust:
+    build: ../services/engine-rust
+    ports: ["4060:4060"]
+    environment:
+      RUST_LOG: info

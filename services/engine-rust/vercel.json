@@ -1,0 +1,29 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "dist/index.js",
+        "use": "@vercel/node",
+        "config": {
+          "includeFiles": [
+            "circuits/**",
+            "dist/**",
+            "package.json"
+          ]
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/circuits/(.*)",
+        "dest": "/circuits/$1"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "/dist/index.js"
+      }
+    ],
+    "env": {
+      "VERCEL": "1"
+    }
+  }

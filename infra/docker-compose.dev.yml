@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:17
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_USER: signatrust
+      POSTGRES_PASSWORD: signatrust
+      POSTGRES_DB: signatrust
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEBUG: 0
+      DATA_DIR: /tmp/localstack/data
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - ./localstack-init.sh:/etc/localstack/init/ready.d/init-aws.sh
+      - localstack-data:/tmp/localstack
+  #solana-validator:
+  # image: solanalabs/solana:v1.18.26
+  #  command: ["bash","-lc","solana-test-validator --reset --rpc-port 8899 --faucet-port 9900 --log /dev/stdout"]
+  #  ports:
+  #    - "8899:8899"
+  #    - "9900:9900"
+  #solana-test-validator:
+  #  image: ghcr.io/anza-xyz/solana:edge
+  #  container_name: solana-test-validator
+  #  command: ["test-validator","-r"]
+  #  ports: ["8899:8899","8900:8900"]
+  
+  engine-rust:
+    build:
+      context: ../services/engine-rust
+      dockerfile: Dockerfile
+    environment:
+      RUST_LOG: info
+      SOLANA_RPC: https://api.devnet.solana.com
+    ports: ["14060:4060"]
+    depends_on: [postgres, redis]
+
+volumes:
+  localstack-data:

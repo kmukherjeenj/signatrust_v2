@@ -1,0 +1,91 @@
+steps:
+  # Build and push identity-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${832544980021}/identity-service:${COMMIT_SHA}', './identity-service']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${832544980021}/identity-service:${COMMIT_SHA}']
+
+  # Build and push auth-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${832544980021}/auth-service:${COMMIT_SHA}', './auth-service']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${832544980021}/auth-service:${COMMIT_SHA}']
+
+  # Build and push solana-service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${832544980021}/solana-service:${COMMIT_SHA}', './solana-service']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${832544980021}/solana-service:${COMMIT_SHA}']
+
+  # Deploy identity-service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'identity-service'
+      - '--image'
+      - 'gcr.io/${832544980021}/identity-service:${COMMIT_SHA}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'signatrust-backend-sa@${832544980021}.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'PROJECT_ID=${832544980021}'
+      - '--set-secrets'
+      - 'JWT_SECRET=jwt-secret:latest'
+      - '--set-secrets'
+      - 'SOLANA_PRIVATE_KEY=solana-private-key:latest'
+
+  # Deploy auth-service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'auth-service'
+      - '--image'
+      - 'gcr.io/${832544980021}/auth-service:${COMMIT_SHA}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'signatrust-backend-sa@${832544980021}.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'PROJECT_ID=${832544980021}'
+      - '--set-secrets'
+      - 'JWT_SECRET=jwt-secret:latest'
+
+  # Deploy solana-service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'solana-service'
+      - '--image'
+      - 'gcr.io/${832544980021}/solana-service:${COMMIT_SHA}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'signatrust-backend-sa@${832544980021}.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'PROJECT_ID=${832544980021}'
+      - '--set-secrets'
+      - 'SOLANA_PRIVATE_KEY=solana-private-key:latest'
+
+images:
+  - 'gcr.io/${832544980021}/identity-service:${COMMIT_SHA}'
+  - 'gcr.io/${832544980021}/auth-service:${COMMIT_SHA}'
+  - 'gcr.io/${832544980021}/solana-service:${COMMIT_SHA}'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

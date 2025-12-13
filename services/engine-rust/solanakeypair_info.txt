@@ -1,0 +1,31 @@
+Solana Key Pair
+passphrase = kushalmukherjee
+
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Try the new cross-platform PowerShell https://aka.ms/pscore6
+
+PS C:\WINDOWS\system32> solana-keygen new -o c:\temp\new_signatrust_keypair.json
+Generating a new keypair
+
+For added security, enter a BIP39 passphrase
+
+NOTE! This passphrase improves security of the recovery seed phrase NOT the
+keypair file itself, which is stored as insecure plain text
+
+BIP39 Passphrase (empty for none):
+Enter same passphrase again:
+
+Wrote new keypair to c:\temp\new_signatrust_keypair.json
+=========================================================================
+pubkey: 7qtamhm1TYaJhJRVWWJPEbRyJfvjBpbkd2Rj8jNSx7z5
+=========================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+budget lounge name woman simple nurse video grab fit fragile toe remember
+=========================================================================
+PS C:\WINDOWS\system32>
+
+"build": "npx tsc && npm run copy-circuits"
+
+    "build": "tsc && npm run copy-circuits",

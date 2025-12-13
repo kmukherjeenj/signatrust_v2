@@ -1,0 +1,211 @@
+// C:\projects\signatrust\services\signing\prisma\schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  ownerId    String
+  name       String
+  mimeType   String
+  sizeBytes  Int
+  hashSha256 String
+  storageRef String
+  createdAt  DateTime @default(now())
+
+  // optional: sessions that reference this doc
+  sessions SigningSession[]
+}
+
+model SigningSession {
+  id String @id @default(cuid())
+
+  // FK → Document
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // Creator - string ID for backwards compatibility (legacy: "demo-user", etc.)
+  creatorId String
+
+  // FK → User (optional, for authenticated users)
+  userId  String?
+  user    User?    @relation("UserSessions", fields: [userId], references: [id], onDelete: SetNull)
+
+  status      String
+  chainRecord String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Session Management Fields
+  expiresAt          DateTime?  // Optional session deadline
+  cancelledAt        DateTime?  // When session was cancelled
+  cancelledReason    String?    // Optional reason for cancellation
+  cancelChainTx      String?    // Blockchain transaction for cancellation
+  sequentialSigning  Boolean    @default(false)  // Enforce signing order
+
+  // Relation → Signer (the "opposite" side lives on Signer.session)
+  signers Signer[]
+
+  // Relation → AuditEvent (opposite lives on AuditEvent.session)
+  auditEvents AuditEvent[]
+  SignerToken SignerToken[]
+
+  @@index([documentId])
+  @@index([creatorId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([status, expiresAt])
+}
+
+model Signer {
+  id String @id @default(cuid())
+
+  // FK → SigningSession
+  sessionId String
+  session   SigningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  email          String?
+  phone          String?   // Phone number for SMS magic links (E.164 format)
+  did            String?
+  orderIndex     Int
+  status         String
+  signedAt       DateTime?
+  authMethod     String?
+  signatureImage String?   @db.Text // Base64 encoded signature image (data:image/png;base64,...)
+  signatureHash  String?   // SHA-256 hash of signature for verification
+  SignerToken    SignerToken[]
+
+  // Resend tracking
+  resendCount    Int       @default(0)   // Number of times invite was resent
+  lastResendAt   DateTime?               // Timestamp of last resend
+
+  @@index([sessionId, orderIndex], name: "session_order_idx")
+}
+
+model AuditEvent {
+  id String @id @default(cuid())
+
+  // FK → SigningSession
+  sessionId String
+  session   SigningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  type      String
+  actor     String
+  at        DateTime @default(now())
+  ip        String?
+  userAgent String?
+  payload   Json?
+
+  @@index([sessionId, at])
+}
+
+model Outbox {
+  id           String    @id @default(cuid())
+  type         String
+  payload      Json
+  occurredAt   DateTime  @default(now())
+  processedAt  DateTime?
+  attemptCount Int       @default(0)
+  dedupeKey    String?   @unique
+}
+
+model SignerToken {
+  token String @id
+
+  // FK → SigningSession and → Signer (so we know which signer this token belongs to)
+  sessionId String
+  session   SigningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  signerId String
+  signer   Signer @relation(fields: [signerId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  boundIp   String?
+  boundUa   String?
+  createdAt DateTime  @default(now())
+
+  // Token invalidation tracking
+  invalidatedAt DateTime?  // When token was invalidated (cancel/resend)
+  invalidatedBy String?    // Reason: 'cancel' | 'resend' | 'expired'
+
+  @@index([sessionId])
+  @@index([signerId])
+}
+
+model Keypair {
+  did                 String   @id  // Decentralized Identifier (did:sol:pubkey)
+  encryptedSecretKey  String   // AES-256-GCM encrypted secret key (hex)
+  iv                  String   // Initialization vector (hex)
+  authTag             String   // GCM authentication tag (hex)
+  publicKey           String   // Base58 encoded public key (for verification)
+  createdAt           DateTime @default(now())
+  lastUsedAt          DateTime?
+
+  @@index([publicKey])
+}
+
+// ============================================
+// NextAuth.js Models (Email Magic Link Auth)
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  authSessions  AuthSession[]
+
+  // User's signing sessions
+  signingSessions SigningSession[] @relation("UserSessions")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

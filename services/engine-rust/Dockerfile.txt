@@ -1,0 +1,37 @@
+# ---------- Build stage ----------
+FROM rust:1.80 AS build
+WORKDIR /app
+
+# Cache deps
+# Copy only Cargo files first to leverage Docker layer caching
+COPY Cargo.toml Cargo.lock ./
+# If you have a workspace, also copy the members' Cargo.toml files as needed
+# Dummy src to build deps
+RUN mkdir -p src && echo "fn main(){}" > src/main.rs
+RUN cargo build --release
+RUN rm -rf src target/release/deps/engine_rust*
+
+# Now copy real source and build
+COPY . .
+RUN cargo build --release
+
+# ---------- Runtime stage ----------
+# You can use gcr.io/distroless/cc or debian-slim; debian-slim is easier to debug
+FROM debian:bookworm-slim
+
+# Create a non-root user (optional)
+RUN useradd -ms /bin/bash appuser
+WORKDIR /app
+
+# Copy the statically built binary from the builder
+COPY --from=build /app/target/release/engine-rust /app/engine-rust
+
+# Minimal runtime deps
+EXPOSE 4060
+USER appuser
+
+# Healthcheck (optional but handy)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:4060/health || exit 1
+
+ENTRYPOINT ["/app/engine-rust"]

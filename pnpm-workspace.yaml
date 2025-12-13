@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - services/*
+  - '!services/engine-rust'
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma

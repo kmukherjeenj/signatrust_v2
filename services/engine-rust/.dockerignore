@@ -1,0 +1,8 @@
+target
+.git
+logs
+*.log
+node_modules
+.env
+dist
+circuits/**/build

@@ -1,0 +1,13 @@
+/* apps/web-frontend/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* (optional) PDF canvas container tweaks */
+/*.pdfCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}*/
+
+.pdfViewer .page { margin: 0 auto; }

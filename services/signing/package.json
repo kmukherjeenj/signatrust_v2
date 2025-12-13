@@ -1,0 +1,49 @@
+{
+  "name": "@signatrust/signing",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --enable-source-maps dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "postinstall": "prisma generate",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.948.0",
+    "@aws-sdk/client-secrets-manager": "^3.948.0",
+    "@aws-sdk/lib-storage": "^3.948.0",
+    "@fastify/cors": "^9.0.0",
+    "@prisma/client": "^5.19.0",
+    "@solana/web3.js": "^1.98.4",
+    "borsh": "^2.0.0",
+    "fastify": "^4.28.1",
+    "ioredis": "^5.4.1",
+    "nodemailer": "^7.0.11",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "twilio": "^5.10.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.11.30",
+    "@types/nodemailer": "^7.0.4",
+    "@types/qrcode": "^1.5.6",
+    "@types/supertest": "^6.0.3",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "prisma": "^5.19.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.20.6",
+    "typescript": "^5.6.3"
+  }
+}
