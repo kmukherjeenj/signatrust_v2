@@ -311,11 +311,40 @@ invalidatedBy  String?    // 'cancel' | 'resend' | 'expired'
 
 ---
 
+## Latest Update: Security Audit (December 13, 2025)
+
+### ✅ Security Audit - COMPLETE
+
+**Full security review conducted. Critical and High severity issues fixed.**
+
+**Fixes Applied:**
+| Issue | Severity | Status |
+|-------|----------|--------|
+| Next.js RCE (15.5.6) | Critical | ✅ Fixed - Updated to 16.0.10 |
+| Unauthenticated /sessions/finalize | Critical | ✅ Fixed - Added auth |
+| CORS allows all origins | High | ✅ Fixed - Origin allowlist |
+| PDF proxy SSRF | High | ✅ Fixed - Host allowlist + IP blocking |
+| No rate limiting | High | ✅ Fixed - 100 req/min global |
+| Certificate no authorization | High | ✅ Fixed - Added auth |
+
+**Security Strengths Identified:**
+- Cryptographically secure tokens (256-bit random)
+- Constant-time comparison (timing attack prevention)
+- IP/UA binding (session hijacking prevention)
+- AES-256-GCM keypair encryption
+- Zod schema validation on all endpoints
+- Audit logging for all mutations
+- Parameterized queries via Prisma
+
+See `SECURITY_AUDIT.md` for full details.
+
+---
+
 ## Next Steps (When Resuming)
 
 See `NEXT_STEPS.md` for detailed roadmap. Priority items:
 
-1. **Production Deployment**
+1. **Production Deployment** (Ready to deploy!)
    - Frontend: Vercel
    - Backend: Railway/Fly.io
    - Database: Supabase/Neon

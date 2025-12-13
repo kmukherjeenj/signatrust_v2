@@ -183,11 +183,13 @@ invalidatedBy  String?    // 'cancel' | 'resend' | 'expired'
 - [ ] Production Twilio credentials
 - [ ] Production SMTP (SendGrid, Postmark, etc.)
 
-**Security:**
-- [ ] Rate limiting on all endpoints
-- [ ] CORS configuration
-- [ ] Error monitoring (Sentry)
-- [ ] Audit logging
+**Security:** ✅ (Critical/High issues fixed - see SECURITY_AUDIT.md)
+- [x] Rate limiting on all endpoints (100 req/min global, stricter on sensitive endpoints)
+- [x] CORS configuration (allowlist based on FRONTEND_URL)
+- [x] SSRF protection on PDF proxy (host allowlist, IP blocking)
+- [x] Authentication on /sessions/finalize and /sessions/:id/certificate
+- [x] Audit logging
+- [ ] Error monitoring (Sentry) - optional
 
 ---
 

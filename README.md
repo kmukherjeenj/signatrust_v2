@@ -31,7 +31,7 @@ A secure, decentralized document signing system with signatures recorded on the 
 
 | Component | Tech Stack | Purpose |
 |-----------|-----------|---------|
-| Web Frontend | Next.js 15, React, Tailwind | User interface, PDF viewing, signature capture |
+| Web Frontend | Next.js 16, React, Tailwind | User interface, PDF viewing, signature capture |
 | Signing Service | Fastify, Prisma, TypeScript | Session management, token handling, API |
 | Solana Program | Rust, Anchor | On-chain document & signature storage |
 | Outbox Worker | TypeScript | Async blockchain transaction processing |
@@ -330,6 +330,12 @@ signatrust/
 - **Constant-Time Comparison** - Prevents timing attacks on token validation
 - **Encrypted Keypairs** - Signer keypairs encrypted with AES-256-GCM
 - **Blockchain Immutability** - Signatures permanently recorded on Solana
+- **Rate Limiting** - 100 requests/minute global limit, stricter on sensitive endpoints
+- **CORS Protection** - Origin allowlist restricts cross-origin requests
+- **SSRF Protection** - PDF proxy validates hosts and blocks internal IPs
+- **Input Validation** - Zod schema validation on all API endpoints
+
+See `SECURITY_AUDIT.md` for full security audit details.
 
 ## Current Status
 
