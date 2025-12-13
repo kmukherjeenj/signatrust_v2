@@ -10,7 +10,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^5.22.0",
-    "next": "^15.0.0",
+    "next": "^16.0.10",
     "next-auth": "5.0.0-beta.30",
     "nodemailer": "^7.0.11",
     "pdfjs-dist": "^5.4.394",

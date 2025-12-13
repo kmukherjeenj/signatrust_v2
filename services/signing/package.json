@@ -20,6 +20,7 @@
     "@aws-sdk/client-secrets-manager": "^3.948.0",
     "@aws-sdk/lib-storage": "^3.948.0",
     "@fastify/cors": "^9.0.0",
+    "@fastify/rate-limit": "^9.1.0",
     "@prisma/client": "^5.19.0",
     "@solana/web3.js": "^1.98.4",
     "borsh": "^2.0.0",

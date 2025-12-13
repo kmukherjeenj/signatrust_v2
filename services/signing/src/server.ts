@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { z } from 'zod';
 import { prisma } from './adapters/prisma.js';
 import { ensureIdempotent } from './routes/util-idem.js';
@@ -13,7 +14,32 @@ import { getSmsService } from './services/smsService.js';
 import { generateCertificate } from './services/certificateGenerator.js';
 
 const app = Fastify({ logger: true });
-await app.register(fastifyCors as any, { origin: true });
+
+// CORS: Restrict to allowed origins
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://localhost:3000',
+].filter(Boolean);
+
+await app.register(fastifyCors as any, {
+  origin: (origin: string, cb: (err: Error | null, allow: boolean) => void) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS not allowed'), false);
+  },
+  credentials: true,
+});
+
+// Rate limiting: Global default
+await app.register(rateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+  errorResponseBuilder: () => ({
+    error: 'rate_limit_exceeded',
+    message: 'Too many requests, please try again later',
+  }),
+});
 
 // Start outbox worker for blockchain processing
 startOutboxWorker().then(() => {
@@ -565,10 +591,43 @@ app.post('/public/sign', async (req, reply) => {
   return reply.send({ ok: true, allSigned: allSigned || false });
 });
 
+/**
+ * POST /sessions/finalize - Manually finalize a session (admin use)
+ * Requires authentication
+ */
 app.post('/sessions/finalize', async (req, reply) => {
-  const { sessionId } = (req.body as any);
-  await prisma.outbox.create({ data: { type: 'chain.post', payload: { sessionId } as any, dedupeKey: `chain:${sessionId}` } });
-  await prisma.signingSession.update({ where: { id: sessionId }, data: { status: 'completed' } });
+  const userId = req.headers['x-user-id'] as string;
+  if (!userId) {
+    return reply.code(401).send({ error: 'unauthorized' });
+  }
+
+  const { sessionId } = z.object({ sessionId: z.string() }).parse(req.body);
+
+  // Verify user owns the session
+  const session = await prisma.signingSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session) {
+    return reply.code(404).send({ error: 'session_not_found' });
+  }
+
+  if (session.userId !== userId && session.creatorId !== userId) {
+    return reply.code(403).send({ error: 'forbidden' });
+  }
+
+  await prisma.outbox.create({
+    data: {
+      type: 'chain.post',
+      payload: { sessionId } as any,
+      dedupeKey: `chain:${sessionId}`,
+    },
+  });
+  await prisma.signingSession.update({
+    where: { id: sessionId },
+    data: { status: 'completed' },
+  });
+
   return reply.send({ status: 'pending_chain' });
 });
 
@@ -639,16 +698,36 @@ app.get('/public/documents/:documentId', async (req, reply) => {
  */
 app.get('/sessions/:sessionId/certificate', async (req, reply) => {
   const { sessionId } = req.params as { sessionId: string };
+  const userId = req.headers['x-user-id'] as string;
+
+  // Allow both authenticated users and signers with valid tokens
+  const signerToken = (req.query as any).token as string | undefined;
 
   try {
     // Check if session exists and is completed
     const session = await prisma.signingSession.findUnique({
       where: { id: sessionId },
-      include: { document: true },
+      include: { document: true, signers: true },
     });
 
     if (!session) {
       return reply.code(404).send({ error: 'session_not_found' });
+    }
+
+    // Authorization: Must be creator, owner, or a signer
+    const isCreator = userId && (session.userId === userId || session.creatorId === userId);
+    let isSigner = false;
+
+    // Check if request has a valid signer token for this session
+    if (signerToken && isValidTokenFormat(signerToken)) {
+      const token = await prisma.signerToken.findUnique({ where: { token: signerToken } });
+      if (token && token.sessionId === sessionId) {
+        isSigner = true;
+      }
+    }
+
+    if (!isCreator && !isSigner) {
+      return reply.code(403).send({ error: 'forbidden', message: 'You do not have access to this certificate' });
     }
 
     if (session.status !== 'completed') {
