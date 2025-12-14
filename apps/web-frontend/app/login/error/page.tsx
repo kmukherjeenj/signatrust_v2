@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function AuthErrorPage() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -16,6 +17,17 @@ export default function AuthErrorPage() {
 
   const message = errorMessages[error || ''] || errorMessages.Default;
 
+  return (
+    <>
+      <h1 className="text-2xl font-semibold mb-2">Sign In Error</h1>
+      <p className="text-zinc-400 mb-6">
+        {message}
+      </p>
+    </>
+  );
+}
+
+export default function AuthErrorPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -32,10 +44,14 @@ export default function AuthErrorPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold mb-2">Sign In Error</h1>
-          <p className="text-zinc-400 mb-6">
-            {message}
-          </p>
+          <Suspense fallback={
+            <>
+              <h1 className="text-2xl font-semibold mb-2">Sign In Error</h1>
+              <p className="text-zinc-400 mb-6">Loading...</p>
+            </>
+          }>
+            <ErrorContent />
+          </Suspense>
           <Link
             href="/login"
             className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-medium text-black"
