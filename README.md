@@ -4,6 +4,14 @@
 
 A secure, decentralized document signing system with signatures recorded on the Solana blockchain.
 
+## Team
+
+| Name | Role |
+|------|------|
+| Kushal Mukherjee | Project Lead |
+| Jonathan Philips | Developer |
+| Ameer Ahmed | Developer |
+
 ## Features
 
 - **SMS Magic Links** - Signers receive signing links via SMS (Twilio) or email
@@ -356,6 +364,19 @@ See `SECURITY_AUDIT.md` for full security audit details.
 | Blockchain Cancellation | ✅ Complete |
 | Session Audit Log | ✅ Complete |
 | Sequential Signing | ✅ Complete |
+| UI/UX Polish | ✅ Complete |
+| Security Audit | ✅ Complete |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding guidelines, and team workflow.
+
+## Documentation
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development setup and guidelines
+- [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md) - Current deployment state
+- [NEXT_STEPS.md](NEXT_STEPS.md) - Roadmap and completed features
+- [SECURITY_AUDIT.md](SECURITY_AUDIT.md) - Security review findings
 
 ## License
 

@@ -194,15 +194,26 @@ invalidatedBy  String?    // 'cancel' | 'resend' | 'expired'
 ---
 
 ### 4. UI/UX Improvements
-**Purpose:** Polish the user experience
+**Status: COMPLETE** (December 14, 2025)
 
-**Tasks:**
-- [ ] Loading states and skeletons
-- [ ] Toast notifications for actions
-- [ ] Mobile responsive improvements
-- [ ] Dark/light mode toggle
-- [ ] Better error messages
-- [ ] Confirmation dialogs for destructive actions
+**Completed Tasks:**
+- [x] Loading states and skeletons (dashboard, modals)
+- [x] Toast notifications for actions (Sonner library)
+- [x] Mobile responsive improvements (modals, buttons)
+- [x] Better error messages (inline + toast)
+- [x] Confirmation dialogs for destructive actions
+- [x] Accessible modals (ARIA attributes, focus management)
+- [x] Reusable UI components (Button, Spinner, Modal, Skeleton)
+
+**Skipped:**
+- [ ] Dark/light mode toggle (app is dark-only by design)
+
+**New Components Created:**
+- `components/ui/Button.tsx` - Button with loading state
+- `components/ui/Spinner.tsx` - Animated spinner
+- `components/ui/Modal.tsx` - Accessible modal
+- `components/ui/Skeleton.tsx` - Skeleton loaders
+- `app/dashboard/loading.tsx` - Dashboard loading state
 
 ---
 
