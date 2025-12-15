@@ -82,10 +82,10 @@ SOLANA_NETWORK="devnet"
 SOLANA_PROGRAM_ID="7Vd926mcQaYRFXhwUGpwchcxkPgerjAb32X7xvobfSJ4"
 KEYPAIR_MASTER_KEY="<your-master-key>"
 
-# SMS (Twilio)
+# SMS (Twilio) - Requires toll-free verification or A2P 10DLC registration
 TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 TWILIO_AUTH_TOKEN="your_auth_token"
-TWILIO_FROM_NUMBER="+15551234567"
+TWILIO_FROM_NUMBER="+18551234567"  # Toll-free recommended
 
 # Email (optional fallback)
 EMAIL_HOST="smtp.example.com"

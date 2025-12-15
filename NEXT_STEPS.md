@@ -330,6 +330,27 @@ TWILIO_FROM_NUMBER="+1234567890"
 FRONTEND_URL="http://localhost:3000"
 ```
 
+### Twilio SMS Setup Requirements
+
+US carriers require verification/registration before SMS delivery:
+
+| Number Type | Requirement | Timeline |
+|-------------|-------------|----------|
+| **Toll-Free** (855, 888, etc.) | Toll-Free Verification | 5 min - 24 hours |
+| **Local** (area code numbers) | A2P 10DLC Campaign Registration | 1-7 days |
+
+**To set up Toll-Free (recommended):**
+1. Buy toll-free number in Twilio Console
+2. Go to: Phone Numbers → Toll-Free → Verification
+3. Submit business info and use case
+4. Wait for approval (typically 5 min - 24 hours)
+
+**Common Twilio Errors:**
+- `30032` - Toll-Free Number Not Verified (wait for verification)
+- `30034` - Message Blocked (A2P 10DLC not registered for local numbers)
+
+**Dev mode fallback:** If Twilio credentials are not configured, SMS sends to console log instead.
+
 ### Frontend (apps/web-frontend/.env.local)
 ```bash
 DATABASE_URL="postgresql://signatrust:signatrust@localhost:5432/signatrust"
