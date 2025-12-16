@@ -1,0 +1,96 @@
+# SignaTrust Local Development Environment
+# Usage: docker-compose -f infra/docker-compose.yml up -d
+#
+# Services:
+#   - PostgreSQL (port 5432) - Main database
+#   - Redis (port 6379) - Caching and session store
+#   - LocalStack (port 4566) - AWS S3 emulator for document storage
+#   - MailHog (port 8025) - Email testing (catches all outgoing emails)
+#
+# After starting, run:
+#   cd services/signing && npx prisma migrate dev
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: signatrust-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: signatrust
+      POSTGRES_PASSWORD: signatrust
+      POSTGRES_DB: signatrust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signatrust"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: signatrust-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # LocalStack (AWS S3 Emulator)
+  # ============================================
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: signatrust-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEBUG: 0
+      PERSISTENCE: 1
+    volumes:
+      - ./localstack-init.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # MailHog (Email Testing)
+  # ============================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: signatrust-mailhog
+    ports:
+      - "1025:1025"   # SMTP server
+      - "8025:8025"   # Web UI
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    name: signatrust-postgres-data
+  redis-data:
+    name: signatrust-redis-data
+  localstack-data:
+    name: signatrust-localstack-data
+
+# Network configuration (optional - uses default bridge)
+networks:
+  default:
+    name: signatrust-network
